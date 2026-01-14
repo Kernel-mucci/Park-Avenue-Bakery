@@ -26,6 +26,25 @@ body {
     line-height: 1.6;
 }
 /* ============================================
+   INSTAGRAM SECTION
+   ============================================ */
+
+.instagram-section {
+    padding: 8rem 0;
+    background: var(--butter);
+}
+
+.instagram-feed-wrapper {
+    max-width: 1200px;
+    margin: 3rem auto;
+}
+
+.instagram-cta {
+    text-align: center;
+    margin-top: 4rem;
+}
+
+/* ============================================
    ELFSIGHT INSTAGRAM FEED STYLING
    ============================================ */
 
@@ -51,7 +70,25 @@ body {
     color: var(--warm-brown) !important;
 }
 
-/* Fix Instagram Load More Button - More Specific */
+/* Instagram feed background */
+.elfsight-app-65e9af00-bd31-465c-80c0-a03279f46e2c {
+    background: transparent !important;
+}
+
+/* Instagram card hover effects */
+.elfsight-app-65e9af00-bd31-465c-80c0-a03279f46e2c .eapps-instagram-feed-item {
+    transition: transform 0.3s ease !important;
+}
+
+.elfsight-app-65e9af00-bd31-465c-80c0-a03279f46e2c .eapps-instagram-feed-item:hover {
+    transform: translateY(-5px) !important;
+}
+
+/* ============================================
+   LOAD MORE BUTTON STYLING
+   ============================================ */
+
+/* Fix Instagram Load More Button */
 .elfsight-app-65e9af00-bd31-465c-80c0-a03279f46e2c button,
 .elfsight-app-65e9af00-bd31-465c-80c0-a03279f46e2c .eapps-instagram-feed-load-more-button,
 .elfsight-app-65e9af00-bd31-465c-80c0-a03279f46e2c [class*="load-more"],
@@ -72,9 +109,11 @@ body {
     font-weight: 600 !important;
     letter-spacing: 1px !important;
     line-height: 1 !important;
+    outline: none !important;
+    box-shadow: none !important;
 }
 
-/* Force button text to center */
+/* Force button text to center and be white */
 .elfsight-app-65e9af00-bd31-465c-80c0-a03279f46e2c button span,
 .elfsight-app-65e9af00-bd31-465c-80c0-a03279f46e2c button div,
 .elfsight-app-65e9af00-bd31-465c-80c0-a03279f46e2c button * {
@@ -95,11 +134,16 @@ body {
     margin: 0 !important;
 }
 
-/* Hover state */
-.elfsight-app-65e9af00-bd31-465c-80c0-a03279f46e2c button:hover {
+/* Hover state - clean with no dark border */
+.elfsight-app-65e9af00-bd31-465c-80c0-a03279f46e2c button:hover,
+.elfsight-app-65e9af00-bd31-465c-80c0-a03279f46e2c button:focus,
+.elfsight-app-65e9af00-bd31-465c-80c0-a03279f46e2c button:active {
     background: var(--deep-brown) !important;
-    border-color: var(--deep-brown) !important;
+    border: 2px solid var(--deep-brown) !important;
+    color: white !important;
     transform: translateY(-2px) !important;
+    outline: none !important;
+    box-shadow: 0 4px 12px rgba(74, 52, 34, 0.2) !important;
 }
 
 /* Hide the Elfsight branding link */
