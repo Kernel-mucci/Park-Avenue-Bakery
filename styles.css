@@ -244,6 +244,7 @@ nav {
     position: relative;
     background: linear-gradient(135deg, var(--butter) 0%, var(--cream) 50%, #F0E7D8 100%);
     overflow: hidden;
+    padding-bottom: 8rem
 }
 
 .hero-overlay {
