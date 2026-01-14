@@ -51,50 +51,61 @@ body {
     color: var(--warm-brown) !important;
 }
 
-/* Instagram feed buttons - UPDATED */
+/* Fix Instagram Load More Button - More Specific */
 .elfsight-app-65e9af00-bd31-465c-80c0-a03279f46e2c button,
-.elfsight-app-65e9af00-bd31-465c-80c0-a03279f46e2c .eapps-instagram-feed-load-more {
+.elfsight-app-65e9af00-bd31-465c-80c0-a03279f46e2c .eapps-instagram-feed-load-more-button,
+.elfsight-app-65e9af00-bd31-465c-80c0-a03279f46e2c [class*="load-more"],
+.elfsight-app-65e9af00-bd31-465c-80c0-a03279f46e2c [class*="button"] {
     background: var(--terracotta) !important;
     color: white !important;
     font-family: 'Questrial', sans-serif !important;
     border: 2px solid var(--terracotta) !important;
-    padding: 0.75rem 1.5rem !important;
+    padding: 1rem 2rem !important;
     border-radius: 0 !important;
     transition: all 0.3s ease !important;
     text-align: center !important;
-    display: inline-block !important;
-    min-width: 150px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin: 2rem auto 0 !important;
+    min-width: 200px !important;
     font-weight: 600 !important;
-    letter-spacing: 0.5px !important;
-    text-transform: none !important;
+    letter-spacing: 1px !important;
+    line-height: 1 !important;
 }
 
-.elfsight-app-65e9af00-bd31-465c-80c0-a03279f46e2c button:hover,
-.elfsight-app-65e9af00-bd31-465c-80c0-a03279f46e2c .eapps-instagram-feed-load-more:hover {
-    background: var(--deep-brown) !important;
-    border-color: var(--deep-brown) !important;
+/* Force button text to center */
+.elfsight-app-65e9af00-bd31-465c-80c0-a03279f46e2c button span,
+.elfsight-app-65e9af00-bd31-465c-80c0-a03279f46e2c button div,
+.elfsight-app-65e9af00-bd31-465c-80c0-a03279f46e2c button * {
     color: white !important;
-}
-
-/* Center the load more button */
-.elfsight-app-65e9af00-bd31-465c-80c0-a03279f46e2c .eapps-instagram-feed-load-more-wrap {
     text-align: center !important;
     display: block !important;
     width: 100% !important;
 }
 
-/* Instagram feed background */
-.elfsight-app-65e9af00-bd31-465c-80c0-a03279f46e2c {
-    background: transparent !important;
+/* Center the button wrapper */
+.elfsight-app-65e9af00-bd31-465c-80c0-a03279f46e2c .eapps-instagram-feed-posts-more,
+.elfsight-app-65e9af00-bd31-465c-80c0-a03279f46e2c [class*="more-wrap"],
+.elfsight-app-65e9af00-bd31-465c-80c0-a03279f46e2c [class*="load-more-wrap"] {
+    text-align: center !important;
+    display: flex !important;
+    justify-content: center !important;
+    width: 100% !important;
+    margin: 0 !important;
 }
 
-/* Instagram card hover effects */
-.elfsight-app-65e9af00-bd31-465c-80c0-a03279f46e2c .eapps-instagram-feed-item {
-    transition: transform 0.3s ease !important;
+/* Hover state */
+.elfsight-app-65e9af00-bd31-465c-80c0-a03279f46e2c button:hover {
+    background: var(--deep-brown) !important;
+    border-color: var(--deep-brown) !important;
+    transform: translateY(-2px) !important;
 }
 
-.elfsight-app-65e9af00-bd31-465c-80c0-a03279f46e2c .eapps-instagram-feed-item:hover {
-    transform: translateY(-5px) !important;
+/* Hide the Elfsight branding link */
+.elfsight-app-65e9af00-bd31-465c-80c0-a03279f46e2c a[href*="elfsight"],
+.eapps-link {
+    display: none !important;
 }
 
 /* Grain texture overlay */
