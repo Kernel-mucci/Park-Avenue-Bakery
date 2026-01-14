@@ -25,6 +25,63 @@ body {
     overflow-x: hidden;
     line-height: 1.6;
 }
+/* ============================================
+   ELFSIGHT INSTAGRAM FEED STYLING
+   ============================================ */
+
+/* Override Elfsight widget styles */
+.elfsight-app-65e9af00-bd31-465c-80c0-a03279f46e2c {
+    font-family: 'Questrial', sans-serif !important;
+}
+
+/* Instagram feed header text */
+.elfsight-app-65e9af00-bd31-465c-80c0-a03279f46e2c h2,
+.elfsight-app-65e9af00-bd31-465c-80c0-a03279f46e2c h3,
+.elfsight-app-65e9af00-bd31-465c-80c0-a03279f46e2c .eapps-instagram-feed-title {
+    font-family: 'Cormorant Garamond', serif !important;
+    color: var(--deep-brown) !important;
+    font-weight: 600 !important;
+}
+
+/* Instagram feed body text */
+.elfsight-app-65e9af00-bd31-465c-80c0-a03279f46e2c p,
+.elfsight-app-65e9af00-bd31-465c-80c0-a03279f46e2c span,
+.elfsight-app-65e9af00-bd31-465c-80c0-a03279f46e2c a {
+    font-family: 'Questrial', sans-serif !important;
+    color: var(--warm-brown) !important;
+}
+
+/* Instagram feed buttons */
+.elfsight-app-65e9af00-bd31-465c-80c0-a03279f46e2c button,
+.elfsight-app-65e9af00-bd31-465c-80c0-a03279f46e2c .eapps-instagram-feed-load-more {
+    background: var(--terracotta) !important;
+    color: white !important;
+    font-family: 'Questrial', sans-serif !important;
+    border: 2px solid var(--terracotta) !important;
+    padding: 0.75rem 1.5rem !important;
+    border-radius: 0 !important;
+    transition: all 0.3s ease !important;
+}
+
+.elfsight-app-65e9af00-bd31-465c-80c0-a03279f46e2c button:hover,
+.elfsight-app-65e9af00-bd31-465c-80c0-a03279f46e2c .eapps-instagram-feed-load-more:hover {
+    background: var(--deep-brown) !important;
+    border-color: var(--deep-brown) !important;
+}
+
+/* Instagram feed background */
+.elfsight-app-65e9af00-bd31-465c-80c0-a03279f46e2c {
+    background: transparent !important;
+}
+
+/* Instagram card hover effects */
+.elfsight-app-65e9af00-bd31-465c-80c0-a03279f46e2c .eapps-instagram-feed-item {
+    transition: transform 0.3s ease !important;
+}
+
+.elfsight-app-65e9af00-bd31-465c-80c0-a03279f46e2c .eapps-instagram-feed-item:hover {
+    transform: translateY(-5px) !important;
+}
 
 /* Grain texture overlay */
 body::before {
