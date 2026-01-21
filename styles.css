@@ -52,6 +52,12 @@ body {
     color: #666; /* Medium gray for description */
 }
 
+/* Constrain the width of the Load More banner */
+.eapps-instagram-feed-posts-grid-load-more-container {
+    max-width: 1200px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+}
 /* ============================================
    ELFSIGHT INSTAGRAM FEED STYLING
    ============================================ */
