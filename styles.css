@@ -26,6 +26,100 @@ body {
     line-height: 1.6;
 }
 /* ============================================
+   TEAM SECTION
+   ============================================ */
+
+.team-section {
+    padding: 8rem 0;
+    background: var(--butter);
+}
+
+.team-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 4rem 3rem;
+    margin-top: 5rem;
+    max-width: 1200px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.team-member {
+    text-align: center;
+}
+
+.team-photo {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    margin: 0 auto 2rem;
+    overflow: hidden;
+    background: #e0e0e0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.team-photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.team-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 2rem;
+    font-weight: 600;
+    color: var(--deep-brown);
+    margin-bottom: 0.5rem;
+}
+
+.team-title {
+    font-size: 1.1rem;
+    color: var(--warm-brown);
+    margin-bottom: 1.5rem;
+    font-weight: 500;
+}
+
+.team-bio {
+    color: #666;
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+    font-size: 1rem;
+}
+
+.team-social {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+}
+
+.team-social a {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--deep-brown);
+    color: white;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+    font-size: 1.2rem;
+}
+
+.team-social a:hover {
+    background: var(--terracotta);
+    transform: translateY(-2px);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .team-grid {
+        grid-template-columns: 1fr;
+        gap: 3rem;
+    }
+}
+/* ============================================
    INSTAGRAM SECTION
    ============================================ */
 
