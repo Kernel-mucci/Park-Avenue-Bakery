@@ -44,6 +44,14 @@ body {
     margin-top: 4rem;
 }
 
+.instagram-section .section-header-center h2 {
+    color: #333; /* Dark gray for heading */
+}
+
+.instagram-section .section-header-center p {
+    color: #666; /* Medium gray for description */
+}
+
 /* ============================================
    ELFSIGHT INSTAGRAM FEED STYLING
    ============================================ */
