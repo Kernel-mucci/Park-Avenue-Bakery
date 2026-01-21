@@ -111,7 +111,17 @@ body {
     background: var(--terracotta);
     transform: translateY(-2px);
 }
+.team-section .section-header-center .section-label {
+    color: var(--terracotta); /* or use a specific color like #c87b5a */
+}
 
+.team-section .section-header-center h2 {
+    color: var(--deep-brown); /* or use #4a3422 */
+}
+
+.team-section .section-header-center p {
+    color: #555; /* Dark gray for better readability */
+}
 /* Responsive adjustments */
 @media (max-width: 768px) {
     .team-grid {
