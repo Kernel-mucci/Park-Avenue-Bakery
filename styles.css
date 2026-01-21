@@ -255,18 +255,35 @@ section[style*="background: white"] .section-header-center p {
    ============================================ */
 
 .instagram-section {
-    padding: 8rem 0;
+    padding: 6rem 0 7rem;
     background: var(--butter);
+}
+
+.instagram-section .section-header-center {
+    margin-bottom: 3rem;
+}
+
+.instagram-section .section-header-center h2 {
+    color: var(--deep-brown);
+}
+
+.instagram-section .section-header-center p {
+    color: var(--warm-brown);
 }
 
 .instagram-feed-wrapper {
     max-width: 1200px;
-    margin: 3rem auto;
+    margin: 0 auto;
+    padding: 1.5rem;
+    background: var(--cream);
+    border: 1px solid rgba(139, 111, 71, 0.15);
+    border-radius: 24px;
+    box-shadow: 0 20px 40px rgba(74, 52, 34, 0.08);
 }
 
 .instagram-cta {
     text-align: center;
-    margin-top: 4rem;
+    margin-top: 3rem;
 }
 
 .instagram-section .section-header-center h2 {
@@ -314,6 +331,16 @@ section[style*="background: white"] .section-header-center p {
     background: transparent !important;
 }
 
+/* Hide widget header, follow prompts, and footer for cleaner layout */
+.elfsight-app-65e9af00-bd31-465c-80c0-a03279f46e2c .eapps-instagram-feed-header,
+.elfsight-app-65e9af00-bd31-465c-80c0-a03279f46e2c .eapps-instagram-feed-title,
+.elfsight-app-65e9af00-bd31-465c-80c0-a03279f46e2c .eapps-instagram-feed-text,
+.elfsight-app-65e9af00-bd31-465c-80c0-a03279f46e2c .eapps-instagram-feed-follow-button-container,
+.elfsight-app-65e9af00-bd31-465c-80c0-a03279f46e2c .eapps-instagram-feed-footer,
+.elfsight-app-65e9af00-bd31-465c-80c0-a03279f46e2c .eapps-instagram-feed-footer-container {
+    display: none !important;
+}
+
 /* Instagram card hover effects */
 .elfsight-app-65e9af00-bd31-465c-80c0-a03279f46e2c .eapps-instagram-feed-item {
     transition: transform 0.3s ease !important;
@@ -337,14 +364,15 @@ section[style*="background: white"] .section-header-center p {
     font-family: 'Questrial', sans-serif !important;
     border: 2px solid var(--terracotta) !important;
     padding: 1rem 2rem !important;
-    border-radius: 0 !important;
+    border-radius: 999px !important;
     transition: all 0.3s ease !important;
     text-align: center !important;
-    display: flex !important;
+    display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
     margin: 2rem auto 0 !important;
     min-width: 200px !important;
+    width: auto !important;
     font-weight: 600 !important;
     letter-spacing: 1px !important;
     line-height: 1 !important;
@@ -1268,12 +1296,6 @@ nav {
     font-size: 1.2rem;
 }
 
-/* Instagram Section */
-.instagram-section {
-    padding: 8rem 0;
-    background: var(--butter);
-}
-
 .instagram-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -1326,11 +1348,6 @@ nav {
     color: white;
     font-size: 1.1rem;
     letter-spacing: 1px;
-}
-
-.instagram-cta {
-    text-align: center;
-    margin-top: 4rem;
 }
 
 /* Visit CTA */
