@@ -112,15 +112,15 @@ body {
     transform: translateY(-2px);
 }
 .team-section .section-header-center .section-label {
-    color: var(--terracotta); /* or use a specific color like #c87b5a */
+    color: #8b6f47; /* Light brown/tan for "MEET THE TEAM" */
 }
 
 .team-section .section-header-center h2 {
-    color: var(--deep-brown); /* or use #4a3422 */
+    color: #4a3422; /* Dark brown for "Our Team" */
 }
 
 .team-section .section-header-center p {
-    color: #555; /* Dark gray for better readability */
+    color: #8b6f47; /* Light brown/tan for the description */
 }
 /* Responsive adjustments */
 @media (max-width: 768px) {
