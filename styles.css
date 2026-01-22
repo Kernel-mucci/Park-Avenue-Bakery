@@ -1513,8 +1513,20 @@ footer {
 }
 
 /* Page Hero - Generic */
-.page-hero {
+/*.page-hero {
     margin-top: 80px;
+    min-height: 50vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--butter) 0%, var(--cream) 50%, #F0E7D8 100%);
+    position: relative;
+    overflow: hidden;
+}*/
+/* Page Hero - Generic */
+.page-hero {
+    padding-top: 150px; /* Increased top padding to account for header */
+    padding-bottom: 4rem; /* Decreased bottom padding */
     min-height: 50vh;
     display: flex;
     align-items: center;
