@@ -25,7 +25,21 @@ body {
     overflow-x: hidden;
     line-height: 1.6;
 }
+/* ============================================
+   ABOUT BTS SECTION
+   ============================================ */
 
+.behind-scenes .section-header-center .section-label {
+    color: var(--terracotta); /* or use a darker color like var(--deep-brown) */
+}
+
+.behind-scenes .section-header-center h2 {
+    color: var(--deep-brown); /* Already should be dark, but ensures it */
+}
+
+.behind-scenes .section-header-center p {
+    color: #555; /* Darker gray instead of the lighter brown */
+}
 /* ============================================
    PHILOSOPHY SECTION
    ============================================ */
