@@ -25,6 +25,34 @@ body {
     overflow-x: hidden;
     line-height: 1.6;
 }
+
+/* Philosophy Lower Section Layout */
+.philosophy-lower {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3rem;
+    margin-top: 3rem;
+    align-items: start;
+}
+
+.philosophy-image {
+    width: 100%;
+}
+
+.philosophy-image img {
+    width: 100%;
+    height: auto;
+    border-radius: 8px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+/* Responsive adjustments */
+@media (max-width: 968px) {
+    .philosophy-lower {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+    }
+}
 /* ============================================
    TEAM SECTION
    ============================================ */
