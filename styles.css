@@ -590,7 +590,7 @@ nav {
 .hero-home {
     padding-top: 180px; /* Add this - adjust value as needed */
     padding-bottom: 4rem; /* Changed from 12rem */
-    min-height: 90vh;
+    min-height: 100vh;
     display: flex;
     align-items: center;
     justify-content: center;
