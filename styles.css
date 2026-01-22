@@ -587,9 +587,9 @@ nav {
     box-shadow: 0 5px 20px rgba(139, 111, 71, 0.3);
 }
 
-/* Hero Home */
 .hero-home {
-    margin-top: 80px;
+    padding-top: 180px; /* Add this - adjust value as needed */
+    padding-bottom: 4rem; /* Changed from 12rem */
     min-height: 90vh;
     display: flex;
     align-items: center;
@@ -597,8 +597,6 @@ nav {
     position: relative;
     background: linear-gradient(135deg, var(--butter) 0%, var(--cream) 50%, #F0E7D8 100%);
     overflow: hidden;
-    padding-bottom: 12rem
-}
 
 .hero-overlay {
     position: absolute;
