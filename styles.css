@@ -1525,8 +1525,8 @@ footer {
 }*/
 /* Page Hero - Generic */
 .page-hero {
-    padding-top: 150px; /* Increased top padding to account for header */
-    padding-bottom: 4rem; /* Decreased bottom padding */
+    padding-top: 180px; /* Increased from 150px */
+    padding-bottom: 4rem;
     min-height: 50vh;
     display: flex;
     align-items: center;
