@@ -72,6 +72,7 @@ body {
 
 .philosophy-image {
     width: 100%;
+    padding-top: 2rem; /* Adjust this value as needed */
 }
 
 .philosophy-image img {
