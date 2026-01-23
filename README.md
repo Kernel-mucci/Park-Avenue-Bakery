@@ -1,192 +1,220 @@
-# Park Avenue Bakery Website
+# Park Avenue Bakery - Online Ordering System
 
-A modern, multi-page website for Park Avenue Bakery in Helena, Montana, featuring their official logo and brand identity.
+Complete ordering system with shopping cart, checkout, and Clover payment integration for Park Avenue Bakery website.
 
-## Features
+## 📁 Files Included
 
-- 6 responsive pages (Home, About, Menu, Custom Cakes, Gallery, Contact)
-- Official Park Avenue Bakery logo in navigation
-- Modern animations and scroll effects
-- European artisan bakery aesthetic
-- Mobile-friendly navigation
-- Smooth scrolling and parallax effects
+### HTML Files
+- `menu.html` - Menu page with product listings and shopping cart
+- `checkout.html` - Checkout page with customer information form
+- `order-confirmation.html` - Order confirmation page after payment
 
-## Files Included
+### JavaScript Files
+- `cart.js` - Shopping cart functionality (add/remove items, quantities, localStorage persistence)
+- `checkout.js` - Checkout process and Clover payment integration
+- `confirmation.js` - Order confirmation display
 
-**HTML Pages:**
-- `index.html` - Home page with hero, features, specials, and menu preview
-- `about.html` - Bakery history and philosophy  
-- `menu.html` - Complete menu by category
-- `cakes.html` - Custom cakes information
-- `gallery.html` - Photo gallery
-- `contact.html` - Location and contact information
+### CSS Files
+- `ordering-styles.css` - All styles for the ordering system
 
-**Styling:**
-- `styles.css` - Main stylesheet with logo styling
-- `menu-styles.css` - Menu-specific styles
+## 🚀 Setup Instructions
 
-**JavaScript:**
-- `script.js` - Animations and interactions
-
-**Assets:**
-- `images/Bakery-logo-color.png` - Official bakery logo
-
-## Quick Start with GitHub Pages
-
-### 1. Create Repository
-- Go to github.com and create new repository
-- Name it `park-avenue-bakery` (or any name)
-- Make it **Public**
-
-### 2. Upload Files
-- Click "uploading an existing file"
-- **Important:** Upload the entire `images` folder with the logo
-- Drag all HTML, CSS, and JS files
-- Click "Commit changes"
-
-### 3. Enable GitHub Pages
-- Go to repository **Settings**
-- Click **Pages** in left sidebar
-- Under "Source", select **main** branch
-- Click **Save**
-
-### 4. Visit Your Site!
-After 1-2 minutes, your site will be live at:
+### 1. File Placement
+Copy all files to your website root directory:
 ```
-https://YOUR-USERNAME.github.io/park-avenue-bakery/
-```
-
-## File Structure
-
-```
-park-avenue-bakery/
-├── index.html
-├── about.html
+your-website/
 ├── menu.html
-├── cakes.html
-├── gallery.html
-├── contact.html
-├── styles.css
-├── menu-styles.css
-├── script.js
-├── images/
-│   └── Bakery-logo-color.png
-└── README.md
+├── checkout.html
+├── order-confirmation.html
+├── cart.js
+├── checkout.js
+├── confirmation.js
+├── ordering-styles.css
+└── styles.css (your existing styles)
 ```
 
-## Customization
+### 2. Add CSS to Your Main Stylesheet
+Add this line to your `styles.css` or `<head>` section:
+```html
+<link rel="stylesheet" href="ordering-styles.css">
+```
 
-### Replace Placeholder Images
-All content images currently use Unsplash placeholders. To add real photos:
+Or copy the contents of `ordering-styles.css` and paste into your existing `styles.css` file.
 
-1. Add your photos to the `images` folder
-2. Update image sources in HTML files:
-   ```html
-   <!-- Change from: -->
-   <img src="https://images.unsplash.com/photo-..." alt="...">
-   
-   <!-- To: -->
-   <img src="images/your-photo.jpg" alt="...">
-   ```
+### 3. Update Navigation Links
+Make sure your header navigation includes a link to the menu:
+```html
+<a href="menu.html" class="btn-nav">Order Online</a>
+```
 
-### Update Contact Info
-Current information (verify and update if needed):
-- **Phone:** (406) 449-8424
-- **Address:** 44 South Park Avenue, Helena, MT 59601
-- **Hours:** Mon–Sat 7am–5:30pm, Sun 8am–2pm
-- **Online ordering:** https://www.parkavenuebakery.net/shop/
-- **Instagram:** @parkavenuebakery
+### 4. Configure Clover Integration
 
-Search and replace these values across all HTML files.
+#### Get Clover Credentials
+1. Sign up for a Clover account: https://www.clover.com/
+2. Get your API credentials from the Clover dashboard:
+   - Merchant ID
+   - API Key (Public Key)
 
-### Logo Customization
-The logo is styled in `styles.css`. Current settings:
-- Desktop: 60px height
-- Mobile: 50px height
-- Hover effect with slight scale and opacity change
+#### Update checkout.js
+Open `checkout.js` and replace these values (lines 10-11):
+```javascript
+this.CLOVER_API_KEY = 'YOUR_ACTUAL_CLOVER_PUBLIC_KEY';
+this.CLOVER_MERCHANT_ID = 'YOUR_ACTUAL_MERCHANT_ID';
+```
 
-To adjust logo size, edit the `.logo img` styles in `styles.css`.
+#### Configure Clover Webhook (Optional)
+Set up a webhook in your Clover dashboard to receive payment confirmations:
+- Endpoint URL: `https://yourwebsite.com/webhook/clover`
+- Events: Payment successful, Payment failed
 
-### Color Scheme
-Edit CSS variables in `styles.css`:
-- **Cream:** #FAF7F0
-- **Warm Brown:** #8B6F47
-- **Deep Brown:** #4A3422
-- **Terracotta:** #C97C5D
-- **Sage:** #A4B494
-- **Butter:** #F4E4C1
+#### Set Return URL
+In your Clover dashboard, configure the return URL to:
+```
+https://yourwebsite.com/order-confirmation.html
+```
 
-## Adding More Photos
+### 5. Server-Side Integration (Production)
 
-To add a photo gallery or replace images:
+For production use, you should implement server-side payment processing:
 
-1. Add photos to the `images` folder with descriptive names:
-   - `bread-sourdough.jpg`
-   - `pastry-croissant.jpg`
-   - `cake-wedding-1.jpg`
-   etc.
+1. Create a server endpoint (Node.js example):
+```javascript
+// server.js
+app.post('/api/create-checkout', async (req, res) => {
+  const { orderData } = req.body;
+  
+  // Create Clover charge
+  const response = await fetch('https://checkout.clover.com/v1/charges', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${process.env.CLOVER_API_KEY}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      amount: orderData.amount,
+      currency: 'usd',
+      // ... other data
+    })
+  });
+  
+  const result = await response.json();
+  res.json({ checkoutUrl: result.hosted_checkout_url });
+});
+```
 
-2. Update the HTML in gallery.html or other pages:
-   ```html
-   <img src="images/bread-sourdough.jpg" alt="Fresh sourdough bread">
-   ```
+2. Update `checkout.js` to call your server:
+```javascript
+async createCloverCheckout(orderData) {
+  const response = await fetch('/api/create-checkout', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ orderData })
+  });
+  
+  const { checkoutUrl } = await response.json();
+  window.location.href = checkoutUrl;
+}
+```
 
-## Custom Domain (Optional)
+## 🎨 Customization
 
-To use your own domain (like parkavenuebakery.com):
+### Adding Menu Items
+Edit `menu.html` and add more items following this pattern:
+```html
+<div class="menu-item" data-category="breads">
+    <div class="menu-item-image">
+        <img src="your-image.jpg" alt="Product Name">
+    </div>
+    <div class="menu-item-content">
+        <h3>Product Name</h3>
+        <p>Product description</p>
+        <div class="menu-item-footer">
+            <span class="price">$9.99</span>
+            <button class="add-to-cart-btn" 
+                    data-id="unique-id" 
+                    data-name="Product Name" 
+                    data-price="9.99"
+                    data-image="your-image.jpg">
+                <i class="fas fa-cart-plus"></i> Add to Cart
+            </button>
+        </div>
+    </div>
+</div>
+```
 
-1. **Buy domain** from Namecheap, Google Domains, etc.
+### Changing Tax Rate
+Montana has no sales tax, so tax is set to 0. If you need to add tax for another location, edit `checkout.js` line 9:
+```javascript
+this.TAX_RATE = 0.08; // Change to your tax rate (e.g., 0.06 for 6%)
+```
 
-2. **Create CNAME file** in your repository:
-   - Create new file named `CNAME` (no extension)
-   - Inside, put just your domain: `parkavenuebakery.com`
+### Modifying Pickup Times
+Edit `checkout.html` to add or remove time slots in the pickup time dropdown.
 
-3. **Update DNS records** at your domain registrar:
-   ```
-   Type: A     Name: @    Value: 185.199.108.153
-   Type: A     Name: @    Value: 185.199.109.153
-   Type: A     Name: @    Value: 185.199.110.153
-   Type: A     Name: @    Value: 185.199.111.153
-   Type: CNAME Name: www  Value: YOUR-USERNAME.github.io
-   ```
+### Styling Adjustments
+All ordering system styles are in `ordering-styles.css`. Common customizations:
+- Colors: Update CSS variables in your main `styles.css`
+- Cart sidebar width: Change `grid-template-columns: 1fr 400px` in `.menu-layout`
+- Item grid columns: Adjust `minmax(300px, 1fr)` in `.menu-items-grid`
 
-4. **Wait 24-48 hours** for DNS propagation
+## 📱 Features
 
-## Browser Support
+✅ Shopping cart with localStorage persistence
+✅ Add/remove items, update quantities
+✅ Category filtering
+✅ Customer information form
+✅ Pickup date/time selection
+✅ No sales tax (Montana)
+✅ Clover payment integration
+✅ Order confirmation page
+✅ Fully responsive design
+✅ Toast notifications
+✅ Form validation
 
-- ✅ Chrome, Firefox, Safari, Edge (latest versions)
-- ✅ Fully responsive on mobile devices
-- ✅ Works on tablets and all screen sizes
+## 🐛 Troubleshooting
 
-## Technical Details
+### Cart not persisting
+- Check browser localStorage is enabled
+- Clear browser cache and try again
 
-**Fonts:** Google Fonts (Cormorant Garamond, Questrial)
-**Images:** Logo included, content images are placeholders
-**Hosting:** Optimized for GitHub Pages
-**Performance:** Fast loading with CSS animations
+### Checkout button not working
+- Verify all JavaScript files are loaded
+- Check browser console for errors
+- Ensure Clover credentials are set
 
-## Troubleshooting
+### Styles not applying
+- Verify `ordering-styles.css` is linked in HTML
+- Check for CSS conflicts with existing styles
+- Clear browser cache
 
-**Logo not showing:**
-- Make sure `images` folder was uploaded to GitHub
-- Check that `Bakery-logo-color.png` is in the `images` folder
-- Verify the path in HTML is `images/Bakery-logo-color.png`
+### Payment not processing
+- Verify Clover API credentials
+- Check Clover dashboard for test mode settings
+- Review browser console for API errors
 
-**Images not loading:**
-- Check file paths are correct
-- Make sure images are in the `images` folder
-- File names are case-sensitive (use lowercase)
+## 📞 Support
 
-**Animations not working:**
-- Make sure `script.js` was uploaded
-- Check browser console (F12) for errors
-- Try hard refresh (Ctrl+Shift+R or Cmd+Shift+R)
+For issues with:
+- **Clover Integration**: https://docs.clover.com/
+- **Website Code**: Check browser console for errors
+- **General Questions**: Contact Park Avenue Bakery
 
-## Support
+## 📝 Notes
 
-Park Avenue Bakery
-44 South Park Avenue
-Helena, MT 59601
-(406) 449-8424
+- The current checkout.js includes a simulation mode for testing
+- For production, implement proper server-side Clover integration
+- Test thoroughly in Clover sandbox mode before going live
+- Consider adding email notifications for orders
+- Implement order management system for bakery staff
 
-Website created 2026
+## 🔒 Security Considerations
+
+- Never expose secret API keys in frontend code
+- Use environment variables for sensitive data
+- Implement HTTPS for production
+- Validate all user inputs server-side
+- Use Clover's hosted checkout for PCI compliance
+
+## 📄 License
+
+Copyright © 2026 Park Avenue Bakery. All rights reserved.
