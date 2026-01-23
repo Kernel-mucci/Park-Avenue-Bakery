@@ -588,9 +588,9 @@ nav {
 }
 
 .hero-home {
-    padding-top: 180px; /* Add this - adjust value as needed */
-    padding-bottom: 4rem; /* Changed from 12rem */
-    min-height: 100vh;
+    padding-top: 180px;
+    padding-bottom: 10rem; /* Increased from 4rem */
+    min-height: 100vh; /* Changed from 90vh if you haven't already */
     display: flex;
     align-items: center;
     justify-content: center;
@@ -598,7 +598,6 @@ nav {
     background: linear-gradient(135deg, var(--butter) 0%, var(--cream) 50%, #F0E7D8 100%);
     overflow: hidden;
 }
-
 .hero-overlay {
     position: absolute;
     top: -50%;
