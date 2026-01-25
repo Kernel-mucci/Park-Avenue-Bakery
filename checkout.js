@@ -173,59 +173,6 @@ class CheckoutManager {
         throw error;
     }
 }
-        
-        // IMPORTANT: This is a simplified example
-        // You'll need to implement proper server-side integration with Clover
-        // For now, we'll simulate the payment and redirect to confirmation
-        
-        // In production, you would:
-        // 1. Send order data to your server
-        // 2. Your server creates a Clover charge/checkout session
-        // 3. Redirect user to Clover Hosted Checkout
-        // 4. Clover redirects back to your order-confirmation.html
-        
-        // For demonstration purposes, we'll directly redirect to confirmation
-        console.log('Order data for Clover:', orderData);
-        console.log('Checkout data:', checkoutData);
-        
-        // Simulate payment processing
-        setTimeout(() => {
-            // Redirect to confirmation page
-            window.location.href = 'order-confirmation.html';
-        }, 1500);
-        
-        /* PRODUCTION CODE - Uncomment and configure when ready:
-        
-        const response = await fetch('https://checkout.clover.com/v1/charges', {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${this.CLOVER_API_KEY}`,
-                'Content-Type': 'application/json',
-                'X-Clover-Merchant-Id': this.CLOVER_MERCHANT_ID
-            },
-            body: JSON.stringify({
-                amount: amountInCents,
-                currency: 'usd',
-                source: checkoutData,
-                metadata: {
-                    orderNumber: orderData.orderNumber,
-                    pickupDate: orderData.customer.pickupDate,
-                    pickupTime: orderData.customer.pickupTime
-                }
-            })
-        });
-        
-        if (!response.ok) {
-            throw new Error('Failed to create checkout session');
-        }
-        
-        const result = await response.json();
-        
-        // Redirect to Clover Hosted Checkout
-        window.location.href = result.hosted_checkout_url;
-        
-        */
-    }
 
     generateOrderNumber() {
         // Generate date prefix (MMDD format)
