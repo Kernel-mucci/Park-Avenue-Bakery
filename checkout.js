@@ -148,24 +148,31 @@ class CheckoutManager {
     }
 
     async createCloverCheckout(orderData) {
-        const totals = orderData.totals;
-        const amountInCents = Math.round(totals.total * 100);
-        
-        // Clover Hosted Checkout configuration
-        const checkoutData = {
-            customer: {
-                email: orderData.customer.email,
-                firstName: orderData.customer.fullName.split(' ')[0],
-                lastName: orderData.customer.fullName.split(' ').slice(1).join(' ') || '',
-                phoneNumber: orderData.customer.phone
+    try {
+        // Call YOUR Vercel serverless function
+        const response = await fetch('/api/create-checkout', {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json' 
             },
-            shoppingCart: {
-                lineItems: orderData.items.map(item => ({
-                    name: item.name,
-                    unitQty: item.quantity,
-                    price: Math.round(item.price * 100) // Convert to cents
-                }))
-            }
+            body: JSON.stringify({ orderData })
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Failed to create checkout');
+        }
+
+        const { checkoutUrl } = await response.json();
+        
+        // Redirect customer to Clover's payment page
+        window.location.href = checkoutUrl;
+
+    } catch (error) {
+        console.error('Checkout error:', error);
+        throw error;
+    }
+}
         };
         
         // IMPORTANT: This is a simplified example
