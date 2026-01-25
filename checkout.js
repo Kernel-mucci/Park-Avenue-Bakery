@@ -3,15 +3,14 @@
 
 class CheckoutManager {
     constructor() {
-        this.orderData = null;
-        this.TAX_RATE = 0; // No sales tax in Montana
-        
-        // IMPORTANT: Replace these with your actual Clover credentials
-        this.CLOVER_API_KEY = 'YOUR_CLOVER_API_KEY'; // Replace with your actual API key
-        this.CLOVER_MERCHANT_ID = 'YOUR_MERCHANT_ID'; // Replace with your merchant ID
-        
-        this.init();
-    }
+    this.orderData = null;
+    this.TAX_RATE = 0; // No sales tax in Montana
+    
+    // API keys now stored securely in Vercel
+    // Not in frontend code anymore!
+    
+    this.init();
+}
 
     init() {
         // Load order from sessionStorage
