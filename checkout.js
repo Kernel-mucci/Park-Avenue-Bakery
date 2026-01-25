@@ -173,7 +173,6 @@ class CheckoutManager {
         throw error;
     }
 }
-        };
         
         // IMPORTANT: This is a simplified example
         // You'll need to implement proper server-side integration with Clover
