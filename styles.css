@@ -351,62 +351,64 @@ section[style*="background: white"] .section-header-center p {
 }
 
 /* ============================================
-   LOAD MORE BUTTON STYLING
+   LOAD MORE BUTTON STYLING - FIXED
+   Replace lines 314-380 in styles.css with this
    ============================================ */
 
-/* Fix Instagram Load More Button */
-.elfsight-app-65e9af00-bd31-465c-80c0-a03279f46e2c button,
-.elfsight-app-65e9af00-bd31-465c-80c0-a03279f46e2c .eapps-instagram-feed-load-more-button,
+/* First, reset the wrapper/container to be invisible */
 .elfsight-app-65e9af00-bd31-465c-80c0-a03279f46e2c [class*="load-more"],
-.elfsight-app-65e9af00-bd31-465c-80c0-a03279f46e2c [class*="button"] {
-    background: var(--terracotta) !important;
-    color: white !important;
-    font-family: 'Questrial', sans-serif !important;
-    border: 2px solid var(--terracotta) !important;
-    padding: 1rem 2rem !important;
-    border-radius: 999px !important;
-    transition: all 0.3s ease !important;
-    text-align: center !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    margin: 2rem auto 0 !important;
-    min-width: 200px !important;
-    width: auto !important;
-    font-weight: 600 !important;
-    letter-spacing: 1px !important;
-    line-height: 1 !important;
-    outline: none !important;
-    box-shadow: none !important;
-}
-
-/* Force button text to center and be white */
-.elfsight-app-65e9af00-bd31-465c-80c0-a03279f46e2c button span,
-.elfsight-app-65e9af00-bd31-465c-80c0-a03279f46e2c button div,
-.elfsight-app-65e9af00-bd31-465c-80c0-a03279f46e2c button * {
-    color: white !important;
-    text-align: center !important;
-    display: block !important;
-    width: 100% !important;
-}
-
-/* Center the button wrapper */
-.elfsight-app-65e9af00-bd31-465c-80c0-a03279f46e2c .eapps-instagram-feed-posts-more,
 .elfsight-app-65e9af00-bd31-465c-80c0-a03279f46e2c [class*="more-wrap"],
-.elfsight-app-65e9af00-bd31-465c-80c0-a03279f46e2c [class*="load-more-wrap"] {
+.elfsight-app-65e9af00-bd31-465c-80c0-a03279f46e2c .eapps-instagram-feed-posts-more,
+.eapps-instagram-feed-posts-grid-load-more-container {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
     text-align: center !important;
     display: flex !important;
     justify-content: center !important;
     width: 100% !important;
-    margin: 0 !important;
+    max-width: 1200px !important;
+    margin: 0 auto !important;
 }
 
-/* Hover state - clean with no dark border */
+/* Now style ONLY the actual button element */
+.elfsight-app-65e9af00-bd31-465c-80c0-a03279f46e2c button {
+    background: var(--terracotta) !important;
+    color: white !important;
+    font-family: 'Questrial', sans-serif !important;
+    border: 2px solid var(--terracotta) !important;
+    padding: 1rem 2.5rem !important;
+    border-radius: 0 !important;
+    transition: all 0.3s ease !important;
+    text-align: center !important;
+    margin: 2rem auto 0 !important;
+    min-width: 200px !important;
+    font-weight: 600 !important;
+    letter-spacing: 1px !important;
+    line-height: 1.2 !important;
+    outline: none !important;
+    box-shadow: none !important;
+    cursor: pointer !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+/* Button text styling */
+.elfsight-app-65e9af00-bd31-465c-80c0-a03279f46e2c button span,
+.elfsight-app-65e9af00-bd31-465c-80c0-a03279f46e2c button div {
+    color: white !important;
+    background: transparent !important;
+    border: none !important;
+}
+
+/* Hover state */
 .elfsight-app-65e9af00-bd31-465c-80c0-a03279f46e2c button:hover,
 .elfsight-app-65e9af00-bd31-465c-80c0-a03279f46e2c button:focus,
 .elfsight-app-65e9af00-bd31-465c-80c0-a03279f46e2c button:active {
     background: var(--deep-brown) !important;
-    border: 2px solid var(--deep-brown) !important;
+    border-color: var(--deep-brown) !important;
     color: white !important;
     transform: translateY(-2px) !important;
     outline: none !important;
