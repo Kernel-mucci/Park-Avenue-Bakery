@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Custom Orders | Park Avenue Bakery</title>
+    <meta name="description" content="Order custom cakes and catering from Park Avenue Bakery in Helena, MT. Wedding cakes, birthday cakes, breakfast and lunch platters for any event.">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600;700&family=Questrial&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Custom Orders Page Specific Styles */
+        .services-toggle {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 3rem;
+            flex-wrap: wrap;
+        }
+
+        .service-tab {
+            padding: 1rem 2.5rem;
+            background: transparent;
+            border: 2px solid var(--warm-brown);
+            color: var(--warm-brown);
+            font-family: 'Questrial', sans-serif;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .service-tab:hover,
+        .service-tab.active {
+            background: var(--terracotta);
+            border-color: var(--terracotta);
+            color: white;
+        }
+
+        .service-tab i {
+            font-size: 1.3rem;
+        }
+
+        /* Order Form Styles */
+        .order-form-section {
+            padding: 6rem 0;
+            background: white;
+        }
+
+        .order-form-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: var(--cream);
+            padding: 3rem;
+            border-radius: 8px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .order-form-container h2 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 2.5rem;
+            color: var(--deep-brown);
+            text-align: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .order-form-container .form-subtitle {
+            text-align: center;
+            color: var(--warm-brown);
+            margin-bottom: 2rem;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--deep-brown);
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .form-group label .required {
+            color: var(--terracotta);
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.875rem 1rem;
+            border: 2px solid rgba(139, 111, 71, 0.3);
+            background: white;
+            font-family: 'Questrial', sans-serif;
+            font-size: 1rem;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+            border-radius: 4px;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: 2px solid var(--terracotta);
+            outline-offset: 2px;
+            border-color: var(--terracotta);
+            box-shadow: 0 0 0 3px rgba(201, 124, 93, 0.1);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        .form-group input[type="file"] {
+            padding: 0.75rem;
+            background: white;
+            cursor: pointer;
+        }
+
+        .form-group input[type="file"]::file-selector-button {
+            padding: 0.5rem 1rem;
+            background: var(--warm-brown);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 1rem;
+            font-family: 'Questrial', sans-serif;
+        }
+
+        .form-group input[type="file"]::file-selector-button:hover {
+            background: var(--terracotta);
+        }
+
+        .file-help {
+            font-size: 0.85rem;
+            color: var(--warm-brown);
+            margin-top: 0.5rem;
+        }
+
+        /* Conditional Fields */
+        .cake-fields,
+        .catering-fields {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .cake-fields.active,
+        .catering-fields.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 1.25rem;
+            background: var(--terracotta);
+            color: white;
+            border: 2px solid var(--terracotta);
+            font-family: 'Questrial', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+
+        .submit-btn:hover {
+            background: var(--deep-brown);
+            border-color: var(--deep-brown);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(74, 52, 34, 0.3);
+        }
+
+        /* Service Cards */
+        .service-cards {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .service-card {
+            background: white;
+            padding: 2.5rem;
+            text-align: center;
+            border: 2px solid transparent;
+            transition: all 0.4s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .service-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: var(--terracotta);
+            transform: scaleX(0);
+            transition: transform 0.4s ease;
+        }
+
+        .service-card:hover {
+            border-color: var(--terracotta);
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .service-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .service-card-icon {
+            font-size: 3.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .service-card h3 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 2rem;
+            color: var(--deep-brown);
+            margin-bottom: 1rem;
+        }
+
+        .service-card p {
+            color: var(--warm-brown);
+            line-height: 1.7;
+            margin-bottom: 1.5rem;
+        }
+
+        .service-card ul {
+            list-style: none;
+            text-align: left;
+            padding: 0;
+            margin: 0;
+        }
+
+        .service-card ul li {
+            padding: 0.5rem 0;
+            padding-left: 1.5rem;
+            color: var(--warm-brown);
+            position: relative;
+        }
+
+        .service-card ul li::before {
+            content: '\2713';
+            position: absolute;
+            left: 0;
+            color: var(--terracotta);
+            font-weight: bold;
+        }
+
+        /* Catering Menu Highlights */
+        .catering-highlights {
+            padding: 6rem 0;
+            background: var(--light-sage);
+        }
+
+        .highlights-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .highlight-card {
+            background: white;
+            padding: 2rem;
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+
+        .highlight-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .highlight-card-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .highlight-card h4 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.5rem;
+            color: var(--deep-brown);
+            margin-bottom: 1rem;
+        }
+
+        .highlight-card p {
+            color: var(--warm-brown);
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        /* Success Message */
+        .form-success {
+            display: none;
+            text-align: center;
+            padding: 3rem;
+        }
+
+        .form-success.show {
+            display: block;
+        }
+
+        .form-success i {
+            font-size: 4rem;
+            color: #4CAF50;
+            margin-bottom: 1.5rem;
+        }
+
+        .form-success h3 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 2rem;
+            color: var(--deep-brown);
+            margin-bottom: 1rem;
+        }
+
+        .form-success p {
+            color: var(--warm-brown);
+            font-size: 1.1rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .service-cards {
+                grid-template-columns: 1fr;
+            }
+
+            .highlights-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .order-form-container {
+                padding: 2rem 1.5rem;
+            }
+
+            .services-toggle {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .service-tab {
+                width: 100%;
+                max-width: 300px;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <a href="#main-content" class="skip-nav">Skip to main content</a>
+    <header id="header">
+        <nav>
+            <div class="logo">
+                <a href="index.html">
+                    <img src="images/Bakery-logo-color.png" alt="Park Avenue Bakery">
+                </a>
+            </div>
+            <ul class="nav-links">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="about.html">About</a></li>
+                <li><a href="menu.html">Menu</a></li>
+                <li><a href="custom-orders.html" class="active">Custom Orders</a></li>
+                <li><a href="gallery.html">Gallery</a></li>
+                <li><a href="contact.html">Contact</a></li>
+            </ul>
+            <a href="menu.html" class="btn-nav">Order Online</a>
+            <div class="mobile-toggle" role="button" aria-label="Toggle navigation menu" tabindex="0"><span></span><span></span><span></span></div>
+        </nav>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="page-hero" id="main-content">
+        <div class="page-hero-content">
+            <span class="hero-label">Custom Creations</span>
+            <h1>Custom Cakes & Catering</h1>
+        </div>
+    </section>
+
+    <!-- Intro Section -->
+    <section style="padding: 6rem 0; background: white;">
+        <div class="container">
+            <div class="story-intro" data-scroll-reveal>
+                <h2>Made Just For You</h2>
+                <p class="lead">From stunning celebration cakes to delicious catering spreads, we create custom orders tailored to your event. Every item is made from scratch with the same care and quality ingredients that have made Park Avenue Bakery Helena's favorite for over 25 years.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Service Cards Section -->
+    <section style="padding: 6rem 0; background: var(--butter);">
+        <div class="container">
+            <div class="section-header-center" data-scroll-reveal>
+                <span class="section-label">Our Services</span>
+                <h2>What We Offer</h2>
+            </div>
+            <div class="service-cards">
+                <div class="service-card" data-scroll-reveal>
+                    <div class="service-card-icon">🎂</div>
+                    <h3>Custom Cakes</h3>
+                    <p>Beautiful, delicious cakes designed for your special occasion.</p>
+                    <ul>
+                        <li>Wedding cakes & dessert tables</li>
+                        <li>Birthday cakes for all ages</li>
+                        <li>Anniversary celebrations</li>
+                        <li>Graduation & baby showers</li>
+                        <li>Custom designs & flavors</li>
+                    </ul>
+                </div>
+                <div class="service-card" data-scroll-reveal data-delay="200">
+                    <div class="service-card-icon">🥐</div>
+                    <h3>Catering</h3>
+                    <p>Fresh-baked breakfast and lunch selections for your group or event.</p>
+                    <ul>
+                        <li>Breakfast pastry platters</li>
+                        <li>Sandwich & lunch trays</li>
+                        <li>Dessert spreads & cookie trays</li>
+                        <li>Corporate meetings & events</li>
+                        <li>Custom menus available</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Inquiry Form Section -->
+    <section class="order-form-section" id="inquiry-form">
+        <div class="container">
+            <div class="order-form-container" data-scroll-reveal>
+                <h2>Request a Quote</h2>
+                <p class="form-subtitle">Tell us about your event and we'll get back to you within 24-48 hours.</p>
+
+                <!-- Service Type Toggle -->
+                <div class="services-toggle">
+                    <button type="button" class="service-tab active" data-service="cake">
+                        <i class="fas fa-birthday-cake"></i> Custom Cake
+                    </button>
+                    <button type="button" class="service-tab" data-service="catering">
+                        <i class="fas fa-utensils"></i> Catering
+                    </button>
+                </div>
+
+                <!-- Form -->
+                <form id="customOrderForm" action="https://formspree.io/f/mqebakgw" method="POST" enctype="multipart/form-data">
+                    <!-- Hidden field for order type -->
+                    <input type="hidden" name="order_type" id="orderType" value="Custom Cake">
+
+                    <!-- Contact Information -->
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="name">Your Name <span class="required">*</span></label>
+                            <input type="text" id="name" name="name" required placeholder="Full name">
+                        </div>
+                        <div class="form-group">
+                            <label for="email">Email Address <span class="required">*</span></label>
+                            <input type="email" id="email" name="email" required placeholder="your@email.com">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="phone">Phone Number <span class="required">*</span></label>
+                            <input type="tel" id="phone" name="phone" required placeholder="(406) 555-1234">
+                        </div>
+                        <div class="form-group">
+                            <label for="eventDate">Event Date <span class="required">*</span></label>
+                            <input type="date" id="eventDate" name="event_date" required>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="eventType">Type of Event <span class="required">*</span></label>
+                            <select id="eventType" name="event_type" required>
+                                <option value="">Select event type...</option>
+                                <option value="Wedding">Wedding</option>
+                                <option value="Birthday">Birthday</option>
+                                <option value="Anniversary">Anniversary</option>
+                                <option value="Graduation">Graduation</option>
+                                <option value="Baby Shower">Baby Shower</option>
+                                <option value="Corporate Event">Corporate Event</option>
+                                <option value="Holiday Party">Holiday Party</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="guestCount">Number of Guests <span class="required">*</span></label>
+                            <input type="number" id="guestCount" name="guest_count" required min="1" placeholder="Approximate number">
+                        </div>
+                    </div>
+
+                    <!-- Cake-Specific Fields -->
+                    <div class="cake-fields active" id="cakeFields">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="cakeStyle">Cake Style</label>
+                                <select id="cakeStyle" name="cake_style">
+                                    <option value="">Select style...</option>
+                                    <option value="Tiered Cake">Tiered Cake</option>
+                                    <option value="Sheet Cake">Sheet Cake</option>
+                                    <option value="Cupcakes">Cupcakes</option>
+                                    <option value="Cake + Cupcakes">Cake + Cupcakes</option>
+                                    <option value="Dessert Table">Dessert Table</option>
+                                    <option value="Not Sure">Not Sure Yet</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="cakeFlavor">Preferred Flavors</label>
+                                <input type="text" id="cakeFlavor" name="cake_flavor" placeholder="e.g., Chocolate, Vanilla, Lemon">
+                            </div>
+                        </div>
+                        <div class="form-group full-width">
+                            <label for="cakeImage">Design Inspiration (Upload Image)</label>
+                            <input type="file" id="cakeImage" name="inspiration_image" accept="image/*">
+                            <p class="file-help">Upload a photo of a cake design you love. Max 10MB. (JPG, PNG, or HEIC)</p>
+                        </div>
+                    </div>
+
+                    <!-- Catering-Specific Fields -->
+                    <div class="catering-fields" id="cateringFields">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="cateringType">Service Type</label>
+                                <select id="cateringType" name="catering_type">
+                                    <option value="">Select service type...</option>
+                                    <option value="Breakfast Only">Breakfast Only</option>
+                                    <option value="Lunch Only">Lunch Only</option>
+                                    <option value="Desserts Only">Desserts Only</option>
+                                    <option value="Breakfast + Lunch">Breakfast + Lunch</option>
+                                    <option value="Full Service">Full Service (All Day)</option>
+                                    <option value="Custom">Custom Menu</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="deliveryOption">Delivery or Pickup</label>
+                                <select id="deliveryOption" name="delivery_option">
+                                    <option value="">Select option...</option>
+                                    <option value="Pickup">Pickup at Bakery</option>
+                                    <option value="Delivery">Delivery (Helena area)</option>
+                                    <option value="Not Sure">Not Sure Yet</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group full-width">
+                            <label for="dietaryRestrictions">Dietary Restrictions or Allergies</label>
+                            <input type="text" id="dietaryRestrictions" name="dietary_restrictions" placeholder="e.g., Gluten-free, Nut allergy, Vegetarian options needed">
+                        </div>
+                    </div>
+
+                    <!-- Common Fields -->
+                    <div class="form-group full-width">
+                        <label for="budget">Budget Range (Optional)</label>
+                        <select id="budget" name="budget">
+                            <option value="">Prefer not to say</option>
+                            <option value="Under $100">Under $100</option>
+                            <option value="$100 - $250">$100 - $250</option>
+                            <option value="$250 - $500">$250 - $500</option>
+                            <option value="$500 - $1000">$500 - $1000</option>
+                            <option value="$1000+">$1000+</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label for="details">Additional Details <span class="required">*</span></label>
+                        <textarea id="details" name="details" required placeholder="Tell us more about your vision, theme, colors, or any special requests..."></textarea>
+                    </div>
+
+                    <button type="submit" class="submit-btn">
+                        <i class="fas fa-paper-plane"></i> Submit Inquiry
+                    </button>
+                </form>
+
+                <!-- Success Message -->
+                <div class="form-success" id="formSuccess">
+                    <i class="fas fa-check-circle"></i>
+                    <h3>Thank You!</h3>
+                    <p>We've received your inquiry and will get back to you within 24-48 hours.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Catering Highlights Section -->
+    <section class="catering-highlights">
+        <div class="container">
+            <div class="section-header-center" data-scroll-reveal>
+                <span class="section-label">Catering Menu</span>
+                <h2>What's Available</h2>
+                <p>All items are made fresh from scratch using quality ingredients</p>
+            </div>
+            <div class="highlights-grid">
+                <div class="highlight-card" data-scroll-reveal>
+                    <div class="highlight-card-icon">🥐</div>
+                    <h4>Breakfast</h4>
+                    <p>Croissants, Danish pastries, cinnamon rolls, muffins, scones, quiche, and more. Perfect for morning meetings or brunch events.</p>
+                </div>
+                <div class="highlight-card" data-scroll-reveal data-delay="200">
+                    <div class="highlight-card-icon">🥪</div>
+                    <h4>Lunch</h4>
+                    <p>Sandwich platters (turkey, ham, roast beef, veggie), fresh salads, Stromboli, and hearty soups. Great for corporate lunches.</p>
+                </div>
+                <div class="highlight-card" data-scroll-reveal data-delay="400">
+                    <div class="highlight-card-icon">🍪</div>
+                    <h4>Desserts</h4>
+                    <p>Cookie trays, bar assortments, mini pastries, and custom cakes. The sweet finish to any event.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Process Timeline -->
+    <section style="padding: 6rem 0; background: white;">
+        <div class="container">
+            <div class="section-header-center" data-scroll-reveal>
+                <span class="section-label">The Process</span>
+                <h2>How It Works</h2>
+            </div>
+            <div class="timeline">
+                <div class="timeline-item" data-scroll-reveal>
+                    <div class="timeline-year">01</div>
+                    <div class="timeline-content">
+                        <h3>Submit Your Inquiry</h3>
+                        <p>Fill out the form above with your event details. The more information you provide, the better we can help!</p>
+                    </div>
+                </div>
+                <div class="timeline-item" data-scroll-reveal data-delay="200">
+                    <div class="timeline-year">02</div>
+                    <div class="timeline-content">
+                        <h3>Consultation</h3>
+                        <p>We'll reach out within 24-48 hours to discuss your vision, answer questions, and finalize the details.</p>
+                    </div>
+                </div>
+                <div class="timeline-item" data-scroll-reveal data-delay="400">
+                    <div class="timeline-year">03</div>
+                    <div class="timeline-content">
+                        <h3>Custom Quote</h3>
+                        <p>Based on your needs, we'll provide a detailed quote for your approval before we begin.</p>
+                    </div>
+                </div>
+                <div class="timeline-item" data-scroll-reveal data-delay="600">
+                    <div class="timeline-year">04</div>
+                    <div class="timeline-content">
+                        <h3>Enjoy Your Event</h3>
+                        <p>We'll prepare everything fresh and have it ready for pickup or delivery on your big day!</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="visit-cta">
+        <div class="container">
+            <div class="visit-content" data-scroll-reveal>
+                <h2>Questions? We're Here to Help</h2>
+                <p>Call us or stop by the bakery to discuss your custom order</p>
+                <div class="visit-buttons">
+                    <a href="tel:4064498424" class="btn btn-primary">(406) 449-8424</a>
+                    <a href="contact.html" class="btn btn-secondary">Visit Our Bakery</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-main">
+                <div class="footer-about">
+                    <h3>Park Avenue Bakery</h3>
+                    <p>Helena's European-style bakery crafting artisanal breads and pastries from scratch since 1998.</p>
+                    <div class="social-links">
+                        <a href="https://www.instagram.com/parkavenuebakery/" target="_blank" rel="noopener noreferrer" aria-label="Instagram">📷</a>
+                        <a href="menu.html" aria-label="Order Online">🛒</a>
+                    </div>
+                </div>
+                <div class="footer-links">
+                    <h4>Quick Links</h4>
+                    <ul>
+                        <li><a href="index.html">Home</a></li>
+                        <li><a href="about.html">About</a></li>
+                        <li><a href="menu.html">Menu</a></li>
+                        <li><a href="custom-orders.html">Custom Orders</a></li>
+                        <li><a href="gallery.html">Gallery</a></li>
+                        <li><a href="contact.html">Contact</a></li>
+                    </ul>
+                </div>
+                <div class="footer-contact">
+                    <h4>Visit Us</h4>
+                    <p>44 South Park Avenue<br>Helena, MT 59601</p>
+                    <p><strong>Mon-Sat:</strong> 7:00am - 5:30pm<br><strong>Sun:</strong> 8:00am - 2:00pm</p>
+                    <p><a href="tel:4064498424">(406) 449-8424</a></p>
+                    <p><a href="mailto:parkavenuebakery@gmail.com">parkavenuebakery@gmail.com</a></p>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 Park Avenue Bakery. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+    <script>
+        // Service Tab Toggle
+        const serviceTabs = document.querySelectorAll('.service-tab');
+        const cakeFields = document.getElementById('cakeFields');
+        const cateringFields = document.getElementById('cateringFields');
+        const orderTypeInput = document.getElementById('orderType');
+
+        serviceTabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                // Update active tab
+                serviceTabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+
+                // Toggle fields
+                const service = tab.dataset.service;
+                if (service === 'cake') {
+                    cakeFields.classList.add('active');
+                    cateringFields.classList.remove('active');
+                    orderTypeInput.value = 'Custom Cake';
+                } else {
+                    cakeFields.classList.remove('active');
+                    cateringFields.classList.add('active');
+                    orderTypeInput.value = 'Catering';
+                }
+            });
+        });
+
+        // Set minimum date to tomorrow
+        const eventDateInput = document.getElementById('eventDate');
+        const today = new Date();
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        eventDateInput.setAttribute('min', tomorrow.toISOString().split('T')[0]);
+
+        // Form submission handling
+        const form = document.getElementById('customOrderForm');
+        const formSuccess = document.getElementById('formSuccess');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const submitBtn = form.querySelector('.submit-btn');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+
+            try {
+                const formData = new FormData(form);
+                const response = await fetch(form.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    form.style.display = 'none';
+                    document.querySelector('.services-toggle').style.display = 'none';
+                    formSuccess.classList.add('show');
+                } else {
+                    throw new Error('Form submission failed');
+                }
+            } catch (error) {
+                alert('There was an error submitting your inquiry. Please try again or call us at (406) 449-8424.');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Submit Inquiry';
+            }
+        });
+    </script>
+</body>
+</html>
