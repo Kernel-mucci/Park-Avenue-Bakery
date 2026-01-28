@@ -10,38 +10,54 @@ class CheckoutManager {
 
     init() {
         // Load order from sessionStorage
-        this.loadOrder();
-        
+        if (!this.loadOrder()) return; // Halt if no order (redirect already triggered)
+
         // Set minimum pickup date to tomorrow
         this.setMinPickupDate();
-        
+
         // Render order summary
         this.renderOrderSummary();
-        
+
         // Setup event listeners
         this.setupEventListeners();
-        
+
         // Check for error messages in URL
         this.checkForErrors();
     }
 
     loadOrder() {
-        const orderJson = sessionStorage.getItem('checkoutOrder');
-        
-        if (!orderJson) {
-            alert('No order found. Redirecting to menu...');
+        try {
+            const orderJson = sessionStorage.getItem('checkoutOrder');
+
+            if (!orderJson) {
+                alert('No order found. Redirecting to menu...');
+                window.location.href = 'menu.html';
+                return false;
+            }
+
+            const parsed = JSON.parse(orderJson);
+
+            // Validate structure
+            if (!parsed || !Array.isArray(parsed.items) || parsed.items.length === 0) {
+                alert('Invalid order data. Redirecting to menu...');
+                window.location.href = 'menu.html';
+                return false;
+            }
+
+            this.orderData = parsed;
+            return true;
+        } catch (e) {
+            alert('Error loading order. Redirecting to menu...');
             window.location.href = 'menu.html';
-            return;
+            return false;
         }
-        
-        this.orderData = JSON.parse(orderJson);
     }
 
     setMinPickupDate() {
         const today = new Date();
         const tomorrow = new Date(today);
         tomorrow.setDate(tomorrow.getDate() + 1);
-        
+
         const minDate = tomorrow.toISOString().split('T')[0];
         const pickupDateInput = document.getElementById('pickupDate');
         if (pickupDateInput) {
@@ -53,7 +69,7 @@ class CheckoutManager {
     checkForErrors() {
         const urlParams = new URLSearchParams(window.location.search);
         const error = urlParams.get('error');
-        
+
         if (error === 'payment_failed') {
             this.showMessage('Payment failed. Please try again.', 'error');
         } else if (error === 'payment_cancelled') {
@@ -62,13 +78,18 @@ class CheckoutManager {
     }
 
     showMessage(message, type = 'info') {
-        // Create a toast notification
+        // Create a toast notification using textContent to prevent XSS
         const toast = document.createElement('div');
         toast.className = `toast toast-${type}`;
-        toast.innerHTML = `
-            <span>${message}</span>
-            <button onclick="this.parentElement.remove()">&times;</button>
-        `;
+
+        const span = document.createElement('span');
+        span.textContent = message;
+
+        const closeBtn = document.createElement('button');
+        closeBtn.textContent = '\u00D7';
+        closeBtn.addEventListener('click', () => toast.remove());
+
+        toast.append(span, closeBtn);
         toast.style.cssText = `
             position: fixed;
             top: 20px;
@@ -85,7 +106,7 @@ class CheckoutManager {
             animation: slideIn 0.3s ease;
         `;
         document.body.appendChild(toast);
-        
+
         // Auto remove after 5 seconds
         setTimeout(() => toast.remove(), 5000);
     }
@@ -94,7 +115,7 @@ class CheckoutManager {
         const subtotal = this.orderData.subtotal;
         const tax = subtotal * this.TAX_RATE;
         const total = subtotal + tax;
-        
+
         return {
             subtotal: subtotal,
             tax: tax,
@@ -105,20 +126,35 @@ class CheckoutManager {
     renderOrderSummary() {
         const summaryItemsContainer = document.getElementById('summaryItems');
         const totals = this.calculateTotals();
-        
+
         if (!summaryItemsContainer) return;
-        
-        // Render items
-        summaryItemsContainer.innerHTML = this.orderData.items.map(item => `
-            <div class="summary-item">
-                <div class="summary-item-details">
-                    <span class="item-name">${item.name}</span>
-                    <span class="item-quantity">x${item.quantity}</span>
-                </div>
-                <span class="item-price">$${(item.price * item.quantity).toFixed(2)}</span>
-            </div>
-        `).join('');
-        
+
+        // Build DOM safely to prevent XSS from sessionStorage data
+        summaryItemsContainer.innerHTML = '';
+        this.orderData.items.forEach(item => {
+            const div = document.createElement('div');
+            div.className = 'summary-item';
+
+            const details = document.createElement('div');
+            details.className = 'summary-item-details';
+
+            const nameSpan = document.createElement('span');
+            nameSpan.className = 'item-name';
+            nameSpan.textContent = item.name;
+
+            const qtySpan = document.createElement('span');
+            qtySpan.className = 'item-quantity';
+            qtySpan.textContent = `x${item.quantity}`;
+
+            const priceSpan = document.createElement('span');
+            priceSpan.className = 'item-price';
+            priceSpan.textContent = `$${(item.price * item.quantity).toFixed(2)}`;
+
+            details.append(nameSpan, qtySpan);
+            div.append(details, priceSpan);
+            summaryItemsContainer.appendChild(div);
+        });
+
         // Update total (no tax in Montana)
         const summaryTotal = document.getElementById('summaryTotal');
         if (summaryTotal) {
@@ -137,12 +173,12 @@ class CheckoutManager {
 
     validateForm() {
         const form = document.getElementById('checkoutForm');
-        
+
         if (!form || !form.checkValidity()) {
             if (form) form.reportValidity();
             return false;
         }
-        
+
         return true;
     }
 
@@ -159,7 +195,7 @@ class CheckoutManager {
 
     generateOrderNumber() {
         const timestamp = Date.now();
-        const random = Math.floor(Math.random() * 1000);
+        const random = Math.floor(Math.random() * 1000000);
         return `PAB-${timestamp}-${random}`;
     }
 
@@ -168,17 +204,17 @@ class CheckoutManager {
         if (!this.validateForm()) {
             return;
         }
-        
+
         // Get button and disable it
         const payBtn = document.getElementById('payNowBtn');
         const originalText = payBtn.innerHTML;
         payBtn.disabled = true;
         payBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating checkout...';
-        
+
         try {
             const formData = this.getFormData();
             const totals = this.calculateTotals();
-            
+
             // Prepare order data for the API
             const orderForClover = {
                 customer: formData,
@@ -186,12 +222,7 @@ class CheckoutManager {
                 totals: totals,
                 orderNumber: this.generateOrderNumber()
             };
-            
-            // Save order details to sessionStorage for confirmation page
-            sessionStorage.setItem('completedOrder', JSON.stringify(orderForClover));
-            
-            console.log('Sending order to API:', orderForClover);
-            
+
             // Call the Vercel serverless function
             const response = await fetch('/api/create-checkout', {
                 method: 'POST',
@@ -200,34 +231,38 @@ class CheckoutManager {
                 },
                 body: JSON.stringify({ orderData: orderForClover })
             });
-            
+
             const result = await response.json();
-            console.log('API Response:', result);
-            
+
             if (!response.ok) {
-                throw new Error(result.details || result.error || 'Failed to create checkout session');
+                throw new Error(result.error || 'Failed to create checkout session');
             }
-            
+
             if (!result.checkoutUrl) {
                 throw new Error('No checkout URL received from payment service');
             }
-            
+
+            // Save order details to sessionStorage ONLY after successful API response
+            // (before redirect to Clover, but after server validated the order)
+            try {
+                sessionStorage.setItem('completedOrder', JSON.stringify(orderForClover));
+            } catch (e) {
+                // Non-fatal: confirmation page may not display details
+            }
+
             // Update button text before redirect
             payBtn.innerHTML = '<i class="fas fa-external-link-alt"></i> Redirecting to payment...';
-            
+
             // Redirect to Clover Hosted Checkout
-            console.log('Redirecting to:', result.checkoutUrl);
             window.location.href = result.checkoutUrl;
-            
+
         } catch (error) {
-            console.error('Payment error:', error);
-            
-            // Show user-friendly error message
+            // Show user-friendly error message (no raw error.message to avoid XSS/info leak)
             this.showMessage(
-                `Payment Error: ${error.message}. Please try again or contact us at (406) 449-8424.`,
+                'Unable to process payment. Please try again or contact us at (406) 449-8424.',
                 'error'
             );
-            
+
             // Re-enable button
             payBtn.disabled = false;
             payBtn.innerHTML = originalText;
@@ -241,8 +276,8 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // Add CSS animation for toast
-const style = document.createElement('style');
-style.textContent = `
+const checkoutStyle = document.createElement('style');
+checkoutStyle.textContent = `
     @keyframes slideIn {
         from {
             transform: translateX(100%);
@@ -263,4 +298,4 @@ style.textContent = `
         line-height: 1;
     }
 `;
-document.head.appendChild(style);
+document.head.appendChild(checkoutStyle);

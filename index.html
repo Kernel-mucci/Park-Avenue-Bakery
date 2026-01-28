@@ -4,12 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Park Avenue Bakery | Helena's European-Style Bakery</title>
+    <meta name="description" content="Park Avenue Bakery is Helena, Montana's European-style bakery crafting artisanal breads, pastries, custom cakes, and lunch from scratch since 1998. Order online for pickup.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600;700&family=Questrial&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+    <a href="#main-content" class="skip-nav">Skip to main content</a>
     <header id="header">
         <nav>
             <div class="logo">
@@ -27,7 +29,7 @@
                 
             </ul>
             <a href="menu.html" class="btn-nav">Order Online</a>
-            <div class="mobile-toggle">
+            <div class="mobile-toggle" role="button" aria-label="Toggle navigation menu" tabindex="0">
                 <span></span>
                 <span></span>
                 <span></span>
@@ -36,7 +38,7 @@
     </header>
 
     <!-- Hero Section with Parallax -->
-    <section class="hero-home">
+    <section class="hero-home" id="main-content">
         <div class="hero-overlay"></div>
         <div class="hero-content">
             <div class="hero-text">
@@ -286,8 +288,8 @@
                     <h3>Park Avenue Bakery</h3>
                     <p>Helena's European-style bakery crafting artisanal breads and pastries from scratch since 1998.</p>
                     <div class="social-links">
-                        <a href="https://www.instagram.com/parkavenuebakery/" target="_blank">📷</a>
-                        <a href="menu.html" target="_blank">🛒</a>
+                        <a href="https://www.instagram.com/parkavenuebakery/" target="_blank" rel="noopener noreferrer" aria-label="Instagram">📷</a>
+                        <a href="menu.html" aria-label="Order Online">🛒</a>
                     </div>
                 </div>
                 <div class="footer-links">

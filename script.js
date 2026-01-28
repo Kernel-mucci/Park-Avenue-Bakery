@@ -17,21 +17,31 @@ if (mobileToggle) {
     });
 }
 
+// Throttle helper — ensures callback runs at most once per animation frame
+function throttleRAF(fn) {
+    let ticking = false;
+    return function() {
+        if (!ticking) {
+            ticking = true;
+            requestAnimationFrame(() => {
+                fn();
+                ticking = false;
+            });
+        }
+    };
+}
+
 // Header Scroll Effect
 const header = document.getElementById('header');
-let lastScroll = 0;
 
-window.addEventListener('scroll', () => {
+const handleHeaderScroll = () => {
     const currentScroll = window.pageYOffset;
-    
     if (currentScroll > 100) {
         header.classList.add('scrolled');
     } else {
         header.classList.remove('scrolled');
     }
-    
-    lastScroll = currentScroll;
-});
+};
 
 // Smooth Scroll for Anchor Links
 document.querySelectorAll('a[href^="#"]').forEach(anchor => {
@@ -55,14 +65,32 @@ const revealOnScroll = () => {
         const elementTop = element.getBoundingClientRect().top;
         const elementBottom = element.getBoundingClientRect().bottom;
         const windowHeight = window.innerHeight;
-        
+
         if (elementTop < windowHeight - 100 && elementBottom > 0) {
             element.classList.add('revealed');
         }
     });
 };
 
-window.addEventListener('scroll', revealOnScroll);
+// Parallax Effect for Hero
+const heroOverlay = document.querySelector('.hero-overlay');
+
+const handleParallax = () => {
+    if (heroOverlay) {
+        const scrolled = window.pageYOffset;
+        const parallaxSpeed = 0.5;
+        heroOverlay.style.transform = `translateY(${scrolled * parallaxSpeed}px)`;
+    }
+};
+
+// Single throttled scroll handler instead of three separate listeners
+const onScroll = throttleRAF(() => {
+    handleHeaderScroll();
+    revealOnScroll();
+    handleParallax();
+});
+
+window.addEventListener('scroll', onScroll, { passive: true });
 window.addEventListener('load', revealOnScroll);
 revealOnScroll(); // Initial check
 
@@ -73,37 +101,26 @@ tiltElements.forEach(element => {
     element.addEventListener('mouseenter', function() {
         this.style.transition = 'transform 0.1s ease-out';
     });
-    
+
     element.addEventListener('mousemove', function(e) {
         const rect = this.getBoundingClientRect();
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
-        
+
         const centerX = rect.width / 2;
         const centerY = rect.height / 2;
-        
+
         const rotateX = (y - centerY) / 20;
         const rotateY = (centerX - x) / 20;
-        
+
         this.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-10px)`;
     });
-    
+
     element.addEventListener('mouseleave', function() {
         this.style.transition = 'transform 0.4s ease';
         this.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) translateY(0)';
     });
 });
-
-// Parallax Effect for Hero
-const heroOverlay = document.querySelector('.hero-overlay');
-
-if (heroOverlay) {
-    window.addEventListener('scroll', () => {
-        const scrolled = window.pageYOffset;
-        const parallaxSpeed = 0.5;
-        heroOverlay.style.transform = `translateY(${scrolled * parallaxSpeed}px)`;
-    });
-}
 
 // Lazy Loading Images
 const lazyImages = document.querySelectorAll('img[data-src]');
@@ -124,16 +141,16 @@ lazyImages.forEach(img => imageObserver.observe(img));
 // Counter Animation for Stats
 const animateCounters = () => {
     const counters = document.querySelectorAll('.stat-number');
-    
+
     counters.forEach(counter => {
         const target = counter.textContent;
-        
+
         // Only animate numbers
         if (!isNaN(parseInt(target))) {
             const updateCount = () => {
                 const count = parseInt(counter.textContent);
                 const increment = Math.ceil(parseInt(target) / 50);
-                
+
                 if (count < parseInt(target)) {
                     counter.textContent = count + increment;
                     setTimeout(updateCount, 30);
@@ -141,7 +158,7 @@ const animateCounters = () => {
                     counter.textContent = target;
                 }
             };
-            
+
             // Reset and start animation when visible
             const observer = new IntersectionObserver((entries) => {
                 entries.forEach(entry => {
@@ -152,7 +169,7 @@ const animateCounters = () => {
                     }
                 });
             });
-            
+
             observer.observe(counter);
         }
     });
@@ -167,11 +184,11 @@ const contactForm = document.getElementById('contact-form');
 if (contactForm) {
     contactForm.addEventListener('submit', (e) => {
         e.preventDefault();
-        
+
         const name = document.getElementById('name').value;
         const email = document.getElementById('email').value;
         const message = document.getElementById('message').value;
-        
+
         // Basic validation
         if (name && email && message) {
             // Show success message
@@ -208,7 +225,7 @@ interactiveElements.forEach(element => {
     element.addEventListener('mouseenter', () => {
         cursor.classList.add('hover');
     });
-    
+
     element.addEventListener('mouseleave', () => {
         cursor.classList.remove('hover');
     });

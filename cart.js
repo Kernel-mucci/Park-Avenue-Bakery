@@ -1,9 +1,17 @@
 // Shopping Cart functionality for Park Avenue Bakery
 // Handles adding items to cart, updating quantities, and checkout
 
+// HTML-escape helper to prevent XSS when rendering user/storage data
+function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+}
+
 class ShoppingCart {
     constructor() {
         this.items = [];
+        this.MAX_QUANTITY = 99;
         this.loadCart();
         this.init();
     }
@@ -36,17 +44,29 @@ class ShoppingCart {
 
     addItem(e) {
         const btn = e.currentTarget;
+        const price = parseFloat(btn.dataset.price);
+
+        // Validate price is a positive finite number
+        if (!Number.isFinite(price) || price <= 0) {
+            this.showNotification('Unable to add item — invalid price.');
+            return;
+        }
+
         const item = {
             id: btn.dataset.id,
             name: btn.dataset.name,
-            price: parseFloat(btn.dataset.price),
+            price: price,
             image: btn.dataset.image,
             quantity: 1
         };
 
         const existingItem = this.items.find(i => i.id === item.id);
-        
+
         if (existingItem) {
+            if (existingItem.quantity >= this.MAX_QUANTITY) {
+                this.showNotification(`Maximum quantity (${this.MAX_QUANTITY}) reached.`);
+                return;
+            }
             existingItem.quantity++;
         } else {
             this.items.push(item);
@@ -66,10 +86,13 @@ class ShoppingCart {
     updateQuantity(id, change) {
         const item = this.items.find(i => i.id === id);
         if (item) {
-            item.quantity += change;
-            if (item.quantity <= 0) {
+            const newQty = item.quantity + change;
+            if (newQty <= 0) {
                 this.removeItem(id);
+            } else if (newQty > this.MAX_QUANTITY) {
+                this.showNotification(`Maximum quantity (${this.MAX_QUANTITY}) reached.`);
             } else {
+                item.quantity = newQty;
                 this.saveCart();
                 this.render();
             }
@@ -96,6 +119,8 @@ class ShoppingCart {
         const totalAmount = document.querySelector('.total-amount');
         const checkoutBtn = document.querySelector('.checkout-btn');
 
+        if (!cartItemsContainer || !cartCount || !totalAmount || !checkoutBtn) return;
+
         // Update cart count
         const totalItems = this.getTotalItems();
         cartCount.textContent = `${totalItems} ${totalItems === 1 ? 'item' : 'items'}`;
@@ -115,35 +140,65 @@ class ShoppingCart {
                 </div>
             `;
         } else {
-            cartItemsContainer.innerHTML = this.items.map(item => `
-                <div class="cart-item">
-                    <div class="cart-item-image">
-                        <img src="${item.image}" alt="${item.name}">
-                    </div>
-                    <div class="cart-item-details">
-                        <h4>${item.name}</h4>
-                        <div class="cart-item-price">$${item.price.toFixed(2)}</div>
-                        <div class="cart-item-controls">
-                            <button class="quantity-btn" onclick="cart.updateQuantity('${item.id}', -1)">
-                                <i class="fas fa-minus"></i>
-                            </button>
-                            <span class="quantity">${item.quantity}</span>
-                            <button class="quantity-btn" onclick="cart.updateQuantity('${item.id}', 1)">
-                                <i class="fas fa-plus"></i>
-                            </button>
-                            <button class="remove-item" onclick="cart.removeItem('${item.id}')">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            `).join('');
+            // Build DOM safely to avoid innerHTML XSS with user data
+            cartItemsContainer.innerHTML = '';
+            this.items.forEach(item => {
+                const cartItem = document.createElement('div');
+                cartItem.className = 'cart-item';
+
+                const imgDiv = document.createElement('div');
+                imgDiv.className = 'cart-item-image';
+                const img = document.createElement('img');
+                img.src = item.image;
+                img.alt = item.name;
+                imgDiv.appendChild(img);
+
+                const detailsDiv = document.createElement('div');
+                detailsDiv.className = 'cart-item-details';
+
+                const h4 = document.createElement('h4');
+                h4.textContent = item.name;
+
+                const priceDiv = document.createElement('div');
+                priceDiv.className = 'cart-item-price';
+                priceDiv.textContent = `$${item.price.toFixed(2)}`;
+
+                const controlsDiv = document.createElement('div');
+                controlsDiv.className = 'cart-item-controls';
+
+                const minusBtn = document.createElement('button');
+                minusBtn.className = 'quantity-btn';
+                minusBtn.setAttribute('aria-label', `Decrease quantity of ${item.name}`);
+                minusBtn.innerHTML = '<i class="fas fa-minus"></i>';
+                minusBtn.addEventListener('click', () => this.updateQuantity(item.id, -1));
+
+                const qtySpan = document.createElement('span');
+                qtySpan.className = 'quantity';
+                qtySpan.textContent = item.quantity;
+
+                const plusBtn = document.createElement('button');
+                plusBtn.className = 'quantity-btn';
+                plusBtn.setAttribute('aria-label', `Increase quantity of ${item.name}`);
+                plusBtn.innerHTML = '<i class="fas fa-plus"></i>';
+                plusBtn.addEventListener('click', () => this.updateQuantity(item.id, 1));
+
+                const removeBtn = document.createElement('button');
+                removeBtn.className = 'remove-item';
+                removeBtn.setAttribute('aria-label', `Remove ${item.name} from cart`);
+                removeBtn.innerHTML = '<i class="fas fa-trash"></i>';
+                removeBtn.addEventListener('click', () => this.removeItem(item.id));
+
+                controlsDiv.append(minusBtn, qtySpan, plusBtn, removeBtn);
+                detailsDiv.append(h4, priceDiv, controlsDiv);
+                cartItem.append(imgDiv, detailsDiv);
+                cartItemsContainer.appendChild(cartItem);
+            });
         }
     }
 
     filterCategory(e) {
         const category = e.target.dataset.category;
-        
+
         // Update active button
         document.querySelectorAll('.filter-btn').forEach(btn => {
             btn.classList.remove('active');
@@ -162,14 +217,19 @@ class ShoppingCart {
 
     checkout() {
         if (this.items.length === 0) return;
-        
+
         // Save order details to sessionStorage for checkout page
-        sessionStorage.setItem('checkoutOrder', JSON.stringify({
-            items: this.items,
-            subtotal: this.getTotal(),
-            timestamp: new Date().toISOString()
-        }));
-        
+        try {
+            sessionStorage.setItem('checkoutOrder', JSON.stringify({
+                items: this.items,
+                subtotal: this.getTotal(),
+                timestamp: new Date().toISOString()
+            }));
+        } catch (e) {
+            this.showNotification('Unable to proceed to checkout. Please try again.');
+            return;
+        }
+
         // Redirect to checkout page
         window.location.href = 'checkout.html';
     }
@@ -199,13 +259,30 @@ class ShoppingCart {
     }
 
     saveCart() {
-        localStorage.setItem('bakeryCart', JSON.stringify(this.items));
+        try {
+            localStorage.setItem('bakeryCart', JSON.stringify(this.items));
+        } catch (e) {
+            // Storage full or disabled — cart will not persist across page loads
+        }
     }
 
     loadCart() {
-        const saved = localStorage.getItem('bakeryCart');
-        if (saved) {
-            this.items = JSON.parse(saved);
+        try {
+            const saved = localStorage.getItem('bakeryCart');
+            if (saved) {
+                const parsed = JSON.parse(saved);
+                if (Array.isArray(parsed)) {
+                    // Validate each item has required fields
+                    this.items = parsed.filter(item =>
+                        item && typeof item.id === 'string' &&
+                        typeof item.name === 'string' &&
+                        Number.isFinite(item.price) && item.price > 0 &&
+                        Number.isFinite(item.quantity) && item.quantity > 0
+                    );
+                }
+            }
+        } catch (e) {
+            this.items = [];
         }
     }
 }

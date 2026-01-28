@@ -1,10 +1,25 @@
 // api/create-checkout.js
 // Vercel Serverless Function for Clover Hosted Checkout
-// FIXED: Using correct production endpoint
+
+// Server-side price catalog to prevent client-side price tampering
+const PRICE_CATALOG = {
+    'test-1': 0.50,
+    '1': 8.50,
+    '2': 4.50,
+    '3': 7.50,
+    '4': 5.00,
+    '5': 6.50,
+    '6': 10.50
+};
 
 export default async function handler(req, res) {
-    // Set CORS headers
-    res.setHeader('Access-Control-Allow-Origin', '*');
+    // Restrict CORS to the production domain (set ALLOWED_ORIGIN in Vercel env vars)
+    const allowedOrigin = process.env.ALLOWED_ORIGIN || 'https://park-avenue-bakery.vercel.app';
+    const requestOrigin = req.headers.origin;
+
+    if (requestOrigin === allowedOrigin) {
+        res.setHeader('Access-Control-Allow-Origin', allowedOrigin);
+    }
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
@@ -28,56 +43,76 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: 'Customer email is required' });
     }
 
+    if (!Array.isArray(orderData.items) || orderData.items.length === 0) {
+        return res.status(400).json({ error: 'Order must contain at least one item' });
+    }
+
     const CLOVER_API_KEY = process.env.CLOVER_API_KEY;
     const CLOVER_MERCHANT_ID = process.env.CLOVER_MERCHANT_ID;
 
     if (!CLOVER_API_KEY || !CLOVER_MERCHANT_ID) {
         console.error('Missing Clover credentials');
-        return res.status(500).json({ error: 'Server configuration error - missing credentials' });
+        return res.status(500).json({ error: 'Server configuration error' });
     }
 
     try {
-        console.log('=== Clover Checkout Request ===');
-        console.log('Order Number:', orderData.orderNumber);
-        console.log('Merchant ID:', CLOVER_MERCHANT_ID);
-        console.log('Total Amount:', orderData.totals.total);
+        // Validate and enforce server-side prices for each item
+        const lineItems = [];
+        let computedSubtotal = 0;
+
+        for (const item of orderData.items) {
+            if (!item.id || !item.name || !item.quantity) {
+                return res.status(400).json({ error: 'Invalid item in order' });
+            }
+
+            const quantity = Math.floor(Number(item.quantity));
+            if (!Number.isFinite(quantity) || quantity < 1 || quantity > 100) {
+                return res.status(400).json({ error: `Invalid quantity for item: ${item.name}` });
+            }
+
+            // Enforce server-side price from catalog
+            const serverPrice = PRICE_CATALOG[String(item.id)];
+            if (serverPrice === undefined) {
+                return res.status(400).json({ error: `Unknown item: ${item.name}` });
+            }
+
+            computedSubtotal += serverPrice * quantity;
+
+            lineItems.push({
+                name: String(item.name).substring(0, 127),
+                price: Math.round(serverPrice * 100), // Convert to cents
+                unitQty: quantity
+            });
+        }
 
         // Parse customer name
-        const nameParts = orderData.customer.fullName ? orderData.customer.fullName.split(' ') : ['Customer'];
+        const nameParts = orderData.customer.fullName ? String(orderData.customer.fullName).split(' ') : ['Customer'];
         const firstName = nameParts[0] || 'Customer';
         const lastName = nameParts.slice(1).join(' ') || 'Customer';
 
-        // Build line items (prices in cents)
-        const lineItems = orderData.items.map(item => ({
-            name: item.name,
-            price: Math.round(item.price * 100), // Convert to cents
-            unitQty: item.quantity
-        }));
+        // Build redirect URLs from environment or default
+        const siteUrl = process.env.SITE_URL || 'https://park-avenue-bakery.vercel.app';
 
         // Build checkout request payload
         const checkoutPayload = {
             customer: {
-                email: orderData.customer.email,
+                email: String(orderData.customer.email),
                 firstName: firstName,
                 lastName: lastName,
-                phoneNumber: orderData.customer.phone || ''
+                phoneNumber: String(orderData.customer.phone || '')
             },
             shoppingCart: {
                 lineItems: lineItems
             },
             redirectUrls: {
-                success: 'https://park-avenue-bakery.vercel.app/order-confirmation.html',
-                failure: 'https://park-avenue-bakery.vercel.app/checkout.html?error=payment_failed',
-                cancel: 'https://park-avenue-bakery.vercel.app/checkout.html?error=payment_cancelled'
+                success: `${siteUrl}/order-confirmation.html`,
+                failure: `${siteUrl}/checkout.html?error=payment_failed`,
+                cancel: `${siteUrl}/checkout.html?error=payment_cancelled`
             }
         };
 
-        console.log('Checkout Payload:', JSON.stringify(checkoutPayload, null, 2));
-
         // CORRECT PRODUCTION ENDPOINT
         const CLOVER_CHECKOUT_URL = 'https://www.clover.com/invoicingcheckoutservice/v1/checkouts';
-
-        console.log('Calling Clover API:', CLOVER_CHECKOUT_URL);
 
         const cloverResponse = await fetch(CLOVER_CHECKOUT_URL, {
             method: 'POST',
@@ -91,41 +126,21 @@ export default async function handler(req, res) {
         });
 
         const responseText = await cloverResponse.text();
-        console.log('Clover Response Status:', cloverResponse.status);
-        console.log('Clover Response Body:', responseText);
 
         if (!cloverResponse.ok) {
-            console.error('Clover API Error:', cloverResponse.status, responseText);
-            
-            // Try to parse error details
-            let errorMessage = `Clover API returned ${cloverResponse.status}`;
-            try {
-                const errorData = JSON.parse(responseText);
-                if (errorData.message) {
-                    errorMessage = errorData.message;
-                }
-            } catch (e) {
-                errorMessage = responseText || errorMessage;
-            }
-
-            return res.status(cloverResponse.status).json({
-                error: 'Payment service error',
-                details: errorMessage,
-                status: cloverResponse.status
+            console.error('Clover API Error:', cloverResponse.status);
+            return res.status(502).json({
+                error: 'Payment service is temporarily unavailable. Please try again.'
             });
         }
 
         // Parse successful response
         const checkoutData = JSON.parse(responseText);
-        
-        console.log('Checkout Session Created:', checkoutData.checkoutSessionId);
-        console.log('Checkout URL:', checkoutData.href);
 
         if (!checkoutData.href) {
-            console.error('No checkout URL in response:', checkoutData);
-            return res.status(500).json({
-                error: 'Invalid response from payment service',
-                details: 'No checkout URL returned'
+            console.error('No checkout URL in Clover response');
+            return res.status(502).json({
+                error: 'Payment service returned an invalid response. Please try again.'
             });
         }
 
@@ -137,12 +152,9 @@ export default async function handler(req, res) {
         });
 
     } catch (error) {
-        console.error('Server Error:', error.message);
-        console.error('Stack:', error.stack);
-        
+        console.error('Checkout error:', error.message);
         return res.status(500).json({
-            error: 'Failed to create payment session',
-            details: error.message
+            error: 'Unable to create payment session. Please try again or contact us at (406) 449-8424.'
         });
     }
 }
