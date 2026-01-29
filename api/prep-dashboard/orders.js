@@ -168,22 +168,37 @@ function processOrders(orders, targetDate) {
     const isToday = targetDate === todayStr;
 
     orders.forEach(order => {
-        // Extract pickup time from order note or default to creation time
+        // Extract pickup time from order - check multiple sources
         let pickupTime = null;
         let pickupDate = null;
 
-        // Check if order has note with pickup info (from our checkout flow)
-        // Format: "Pickup: YYYY-MM-DD at HH:MM"
-        const noteText = order.note || '';
-        const pickupMatch = noteText.match(/Pickup:\s*(\d{4}-\d{2}-\d{2})\s*at\s*(\d{1,2}:\d{2})/i);
-        if (pickupMatch) {
-            pickupDate = pickupMatch[1];
-            // Ensure time is in HH:MM format (pad single digit hours)
-            const timeParts = pickupMatch[2].split(':');
-            pickupTime = timeParts[0].padStart(2, '0') + ':' + timeParts[1];
+        // FIRST: Check line items for hidden pickup info (most reliable)
+        // Format: "[PICKUP: YYYY-MM-DD @ HH:MM]"
+        if (order.lineItems && order.lineItems.elements) {
+            for (const item of order.lineItems.elements) {
+                const pickupItemMatch = (item.name || '').match(/\[PICKUP:\s*(\d{4}-\d{2}-\d{2})\s*@\s*(\d{1,2}:\d{2})\]/i);
+                if (pickupItemMatch) {
+                    pickupDate = pickupItemMatch[1];
+                    const timeParts = pickupItemMatch[2].split(':');
+                    pickupTime = timeParts[0].padStart(2, '0') + ':' + timeParts[1];
+                    break;
+                }
+            }
         }
 
-        // If no pickup info in note, use order creation time converted to Mountain Time
+        // SECOND: Check order note (legacy format)
+        // Format: "Pickup: YYYY-MM-DD at HH:MM"
+        if (!pickupTime) {
+            const noteText = order.note || '';
+            const pickupMatch = noteText.match(/Pickup:\s*(\d{4}-\d{2}-\d{2})\s*at\s*(\d{1,2}:\d{2})/i);
+            if (pickupMatch) {
+                pickupDate = pickupMatch[1];
+                const timeParts = pickupMatch[2].split(':');
+                pickupTime = timeParts[0].padStart(2, '0') + ':' + timeParts[1];
+            }
+        }
+
+        // FALLBACK: Use order creation time converted to Mountain Time
         if (!pickupTime && order.createdTime) {
             const createdDate = new Date(order.createdTime);
             // Convert to Mountain Time
@@ -204,10 +219,14 @@ function processOrders(orders, targetDate) {
             const hour = orderTime.getHours();
             // Orders placed after 10am for same-day pickup are flagged
             if (hour >= 10) {
+                // Count items excluding hidden pickup metadata
+                const realItems = order.lineItems?.elements?.filter(
+                    item => !item.name?.startsWith('[PICKUP:')
+                ) || [];
                 sameDayOrders.push({
                     id: order.id,
                     time: formatTime12Hour(pickupTime),
-                    items: order.lineItems?.elements?.length || 0
+                    items: realItems.length
                 });
             }
         }
@@ -226,6 +245,12 @@ function processOrders(orders, targetDate) {
         if (order.lineItems && order.lineItems.elements) {
             order.lineItems.elements.forEach(item => {
                 const name = item.name || 'Unknown Item';
+
+                // Skip hidden pickup info items (they're metadata, not real products)
+                if (name.startsWith('[PICKUP:')) {
+                    return;
+                }
+
                 // Clover stores unitQty as quantity * 1000 (so 1 item = 1000)
                 // Use unitQty/1000 if available, otherwise fall back to quantity field
                 let quantity = 1;
