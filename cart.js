@@ -46,6 +46,23 @@ class ShoppingCart {
         const btn = e.currentTarget;
         const price = parseFloat(btn.dataset.price);
 
+        // Check if pickup date has been selected
+        let pickupDate = null;
+        try {
+            pickupDate = localStorage.getItem('pickupDate');
+        } catch (e) {
+            // Ignore storage errors
+        }
+
+        if (!pickupDate) {
+            this.showNotification('Please select a pickup date first.');
+            const dateSection = document.getElementById('pickupDateSection');
+            if (dateSection) {
+                dateSection.scrollIntoView({ behavior: 'smooth' });
+            }
+            return;
+        }
+
         // Validate price is a positive finite number
         if (!Number.isFinite(price) || price <= 0) {
             this.showNotification('Unable to add item — invalid price.');
@@ -205,9 +222,12 @@ class ShoppingCart {
         });
         e.target.classList.add('active');
 
-        // Filter items
+        // Filter items - also respect availability from order guardrails
         document.querySelectorAll('.menu-item').forEach(item => {
-            if (category === 'all' || item.dataset.category === category) {
+            const matchesCategory = category === 'all' || item.dataset.category === category;
+            const isUnavailable = item.classList.contains('unavailable');
+
+            if (matchesCategory && !isUnavailable) {
                 item.style.display = 'block';
             } else {
                 item.style.display = 'none';
@@ -218,11 +238,41 @@ class ShoppingCart {
     checkout() {
         if (this.items.length === 0) return;
 
+        // Get pickup date from order guardrails
+        let pickupDate = null;
+        try {
+            pickupDate = localStorage.getItem('pickupDate');
+        } catch (e) {
+            // Ignore storage errors
+        }
+
+        if (!pickupDate) {
+            this.showNotification('Please select a pickup date before checkout.');
+            const dateSection = document.getElementById('pickupDateSection');
+            if (dateSection) {
+                dateSection.scrollIntoView({ behavior: 'smooth' });
+            }
+            return;
+        }
+
+        // Validate cart items if order guardrails is available
+        if (typeof window.getOrderGuardrails === 'function') {
+            const guardrails = window.getOrderGuardrails();
+            if (guardrails) {
+                const validation = guardrails.validateCartItems(this.items);
+                if (!validation.valid) {
+                    this.showNotification(validation.errors[0]);
+                    return;
+                }
+            }
+        }
+
         // Save order details to sessionStorage for checkout page
         try {
             sessionStorage.setItem('checkoutOrder', JSON.stringify({
                 items: this.items,
                 subtotal: this.getTotal(),
+                pickupDate: pickupDate,
                 timestamp: new Date().toISOString()
             }));
         } catch (e) {

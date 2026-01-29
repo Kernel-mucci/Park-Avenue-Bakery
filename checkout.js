@@ -12,11 +12,14 @@ class CheckoutManager {
         // Load order from sessionStorage
         if (!this.loadOrder()) return; // Halt if no order (redirect already triggered)
 
-        // Set minimum pickup date to tomorrow
-        this.setMinPickupDate();
+        // Set pickup date from order data (pre-selected in menu)
+        this.setPickupDate();
 
         // Render order summary
         this.renderOrderSummary();
+
+        // Load available time slots for the pickup date
+        this.loadAvailableTimeSlots();
 
         // Setup event listeners
         this.setupEventListeners();
@@ -53,17 +56,102 @@ class CheckoutManager {
         }
     }
 
-    setMinPickupDate() {
-        const today = new Date();
-        const tomorrow = new Date(today);
-        tomorrow.setDate(tomorrow.getDate() + 1);
-
-        const minDate = tomorrow.toISOString().split('T')[0];
+    setPickupDate() {
         const pickupDateInput = document.getElementById('pickupDate');
-        if (pickupDateInput) {
-            pickupDateInput.setAttribute('min', minDate);
-            pickupDateInput.value = minDate;
+        if (!pickupDateInput) return;
+
+        const today = new Date();
+        const minDate = today.toISOString().split('T')[0];
+        pickupDateInput.setAttribute('min', minDate);
+
+        // Use the pickup date from the order (set in menu page)
+        if (this.orderData.pickupDate) {
+            pickupDateInput.value = this.orderData.pickupDate;
+        } else {
+            // Fallback to tomorrow if no date was set
+            const tomorrow = new Date(today);
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            pickupDateInput.value = tomorrow.toISOString().split('T')[0];
         }
+
+        // Add change listener to reload time slots when date changes
+        pickupDateInput.addEventListener('change', () => {
+            this.loadAvailableTimeSlots();
+        });
+    }
+
+    async loadAvailableTimeSlots() {
+        const pickupDateInput = document.getElementById('pickupDate');
+        const pickupTimeSelect = document.getElementById('pickupTime');
+
+        if (!pickupDateInput || !pickupTimeSelect) return;
+
+        const pickupDate = pickupDateInput.value;
+        if (!pickupDate) return;
+
+        // Show loading state
+        pickupTimeSelect.innerHTML = '<option value="">Loading available times...</option>';
+        pickupTimeSelect.disabled = true;
+
+        try {
+            const response = await fetch(`/api/order-rules?pickupDate=${pickupDate}&type=slots`);
+
+            if (!response.ok) {
+                throw new Error('Failed to load time slots');
+            }
+
+            const data = await response.json();
+
+            if (!data.available || !data.slots || data.slots.length === 0) {
+                pickupTimeSelect.innerHTML = '<option value="">No slots available for this date</option>';
+                this.showMessage(data.reason || 'No pickup slots available for this date.', 'warning');
+                return;
+            }
+
+            // Populate time slots
+            pickupTimeSelect.innerHTML = '<option value="">Select a time</option>';
+            data.slots.forEach(slot => {
+                const option = document.createElement('option');
+                option.value = slot.time;
+                option.textContent = this.formatTime(slot.time);
+                if (slot.remainingSlots <= 2) {
+                    option.textContent += ' (limited slots)';
+                }
+                pickupTimeSelect.appendChild(option);
+            });
+
+        } catch (error) {
+            console.error('Error loading time slots:', error);
+            // Fallback to default time slots
+            this.loadDefaultTimeSlots(pickupTimeSelect);
+        } finally {
+            pickupTimeSelect.disabled = false;
+        }
+    }
+
+    formatTime(time24) {
+        const [hours, minutes] = time24.split(':');
+        const hour = parseInt(hours, 10);
+        const ampm = hour >= 12 ? 'PM' : 'AM';
+        const hour12 = hour % 12 || 12;
+        return `${hour12}:${minutes} ${ampm}`;
+    }
+
+    loadDefaultTimeSlots(pickupTimeSelect) {
+        const defaultSlots = [
+            '07:00', '07:30', '08:00', '08:30', '09:00', '09:30',
+            '10:00', '10:30', '11:00', '11:30', '12:00', '12:30',
+            '13:00', '13:30', '14:00', '14:30', '15:00', '15:30',
+            '16:00', '16:30', '17:00', '17:30'
+        ];
+
+        pickupTimeSelect.innerHTML = '<option value="">Select a time</option>';
+        defaultSlots.forEach(time => {
+            const option = document.createElement('option');
+            option.value = time;
+            option.textContent = this.formatTime(time);
+            pickupTimeSelect.appendChild(option);
+        });
     }
 
     checkForErrors() {
@@ -199,6 +287,48 @@ class CheckoutManager {
         return `PAB-${timestamp}-${random}`;
     }
 
+    async validateOrderWithGuardrails(formData) {
+        try {
+            const orderForValidation = {
+                pickupDate: formData.pickupDate,
+                pickupTime: formData.pickupTime,
+                items: this.orderData.items.map(item => ({
+                    id: item.id,
+                    name: item.name,
+                    quantity: item.quantity
+                }))
+            };
+
+            const response = await fetch('/api/order-rules', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ order: orderForValidation })
+            });
+
+            const result = await response.json();
+
+            // Show warnings if any
+            if (result.warnings && result.warnings.length > 0) {
+                result.warnings.forEach(warning => {
+                    this.showMessage(warning, 'warning');
+                });
+            }
+
+            return {
+                valid: response.ok && result.valid !== false,
+                errors: result.errors || [],
+                warnings: result.warnings || []
+            };
+
+        } catch (error) {
+            console.error('Order validation error:', error);
+            // If validation API fails, allow order to proceed (graceful degradation)
+            return { valid: true, errors: [], warnings: [] };
+        }
+    }
+
     async processPayment() {
         // Validate form
         if (!this.validateForm()) {
@@ -209,11 +339,22 @@ class CheckoutManager {
         const payBtn = document.getElementById('payNowBtn');
         const originalText = payBtn.innerHTML;
         payBtn.disabled = true;
-        payBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating checkout...';
+        payBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Validating order...';
 
         try {
             const formData = this.getFormData();
             const totals = this.calculateTotals();
+
+            // Validate order against guardrails before proceeding
+            const validationResult = await this.validateOrderWithGuardrails(formData);
+            if (!validationResult.valid) {
+                this.showMessage(validationResult.errors[0] || 'Order validation failed', 'error');
+                payBtn.disabled = false;
+                payBtn.innerHTML = originalText;
+                return;
+            }
+
+            payBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating checkout...';
 
             // Prepare order data for the API
             const orderForClover = {

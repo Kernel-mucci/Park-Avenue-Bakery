@@ -2809,3 +2809,185 @@ button:focus-visible,
         scroll-behavior: auto !important;
     }
 }
+
+/* ============================================
+   ORDER GUARDRAILS - PICKUP DATE SELECTION
+   ============================================ */
+
+.pickup-date-section {
+    background: var(--butter);
+    padding: 2.5rem;
+    border-radius: 12px;
+    margin-bottom: 2rem;
+    text-align: center;
+    border: 2px solid transparent;
+    transition: all 0.3s ease;
+}
+
+.pickup-date-section.date-selected {
+    background: var(--light-sage);
+    border-color: var(--sage);
+}
+
+.pickup-date-header h2 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.75rem;
+    color: var(--deep-brown);
+    margin-bottom: 0.5rem;
+}
+
+.pickup-date-header p {
+    color: var(--warm-brown);
+    margin-bottom: 1.5rem;
+}
+
+.pickup-date-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    justify-content: center;
+    align-items: center;
+}
+
+.pickup-date-form label {
+    font-weight: 600;
+    color: var(--deep-brown);
+}
+
+.pickup-date-form input[type="date"] {
+    padding: 0.75rem 1rem;
+    border: 2px solid var(--sage);
+    border-radius: 8px;
+    font-size: 1rem;
+    font-family: 'Questrial', sans-serif;
+    background: white;
+    min-width: 180px;
+}
+
+.pickup-date-form input[type="date"]:focus {
+    outline: none;
+    border-color: var(--terracotta);
+    box-shadow: 0 0 0 3px rgba(201, 124, 93, 0.2);
+}
+
+.pickup-date-form .btn-primary {
+    background: var(--terracotta);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-family: 'Questrial', sans-serif;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.pickup-date-form .btn-primary:hover {
+    background: var(--deep-brown);
+    transform: translateY(-2px);
+}
+
+.pickup-date-form .btn-primary:disabled {
+    background: var(--warm-brown);
+    cursor: not-allowed;
+    transform: none;
+}
+
+.pickup-date-info {
+    margin-top: 1.5rem;
+    padding: 1rem;
+    border-radius: 8px;
+    font-size: 0.95rem;
+}
+
+.pickup-date-info.error {
+    background: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #fecaca;
+}
+
+.pickup-date-info.info {
+    background: #e0f2fe;
+    color: #0369a1;
+    border: 1px solid #bae6fd;
+}
+
+/* Specialty Bread Schedule Notice */
+.specialty-schedule-notice {
+    background: linear-gradient(135deg, var(--butter) 0%, var(--light-sage) 100%);
+    padding: 2rem;
+    border-radius: 12px;
+    margin-bottom: 2rem;
+    border-left: 4px solid var(--terracotta);
+}
+
+.specialty-schedule-notice h3 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.25rem;
+    color: var(--deep-brown);
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.specialty-schedule-notice h3 i {
+    color: var(--terracotta);
+}
+
+.specialty-schedule-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.schedule-item {
+    padding: 0.5rem 0.75rem;
+    background: rgba(255, 255, 255, 0.6);
+    border-radius: 6px;
+    font-size: 0.9rem;
+    color: var(--deep-brown);
+}
+
+.schedule-item strong {
+    color: var(--terracotta);
+}
+
+.cutoff-notice {
+    font-size: 0.85rem;
+    color: var(--warm-brown);
+    font-style: italic;
+    margin: 0;
+}
+
+/* Menu item unavailable state */
+.menu-item.unavailable {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+.menu-item.unavailable .add-to-cart-btn {
+    background: #ccc;
+    cursor: not-allowed;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .pickup-date-section {
+        padding: 1.5rem;
+    }
+
+    .pickup-date-form {
+        flex-direction: column;
+    }
+
+    .pickup-date-form input[type="date"],
+    .pickup-date-form .btn-primary {
+        width: 100%;
+    }
+
+    .specialty-schedule-grid {
+        grid-template-columns: 1fr;
+    }
+}
