@@ -135,6 +135,19 @@ export default async function handler(req, res) {
         // Build redirect URLs from environment or default
         const siteUrl = process.env.SITE_URL || 'https://park-avenue-bakery.vercel.app';
 
+        // Build pickup note for Clover order
+        const pickupDate = orderData.customer.pickupDate || '';
+        const pickupTime = orderData.customer.pickupTime || '';
+        const customerNotes = orderData.customer.notes || '';
+
+        let orderNote = '';
+        if (pickupDate && pickupTime) {
+            orderNote = `Pickup: ${pickupDate} at ${pickupTime}`;
+        }
+        if (customerNotes) {
+            orderNote += orderNote ? ` | Notes: ${customerNotes}` : `Notes: ${customerNotes}`;
+        }
+
         // Build checkout request payload
         const checkoutPayload = {
             customer: {
@@ -144,7 +157,8 @@ export default async function handler(req, res) {
                 phoneNumber: String(orderData.customer.phone || '')
             },
             shoppingCart: {
-                lineItems: lineItems
+                lineItems: lineItems,
+                note: orderNote || undefined
             },
             redirectUrls: {
                 success: `${siteUrl}/order-confirmation.html`,
