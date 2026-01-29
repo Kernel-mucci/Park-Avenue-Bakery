@@ -148,6 +148,16 @@ export default async function handler(req, res) {
             orderNote += orderNote ? ` | Notes: ${customerNotes}` : `Notes: ${customerNotes}`;
         }
 
+        // Add a hidden $0 line item with pickup info (Clover doesn't persist shoppingCart.note)
+        // This ensures pickup info is stored with the order and visible in dashboard
+        if (pickupDate && pickupTime) {
+            lineItems.push({
+                name: `[PICKUP: ${pickupDate} @ ${pickupTime}]`,
+                price: 0,
+                unitQty: 1
+            });
+        }
+
         // Build checkout request payload
         const checkoutPayload = {
             customer: {
