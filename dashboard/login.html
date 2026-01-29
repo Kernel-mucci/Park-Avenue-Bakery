@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Staff Login | Park Avenue Bakery</title>
+    <meta name="robots" content="noindex, nofollow">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600;700&family=Questrial&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="dashboard.css">
+</head>
+<body class="login-page">
+    <div class="login-container">
+        <div class="login-card">
+            <div class="login-header">
+                <div class="login-icon">&#127838;</div>
+                <h1>Park Avenue Bakery</h1>
+                <p>Staff Dashboard</p>
+            </div>
+
+            <form id="loginForm" class="login-form">
+                <div class="form-group">
+                    <label for="password" class="sr-only">Password</label>
+                    <input
+                        type="password"
+                        id="password"
+                        name="password"
+                        placeholder="Enter password"
+                        autocomplete="current-password"
+                        required
+                    >
+                </div>
+
+                <div id="errorMessage" class="error-message" style="display: none;"></div>
+
+                <button type="submit" id="loginBtn" class="login-btn">
+                    Enter Dashboard
+                </button>
+            </form>
+
+            <div class="login-footer">
+                <a href="/">&larr; Back to Website</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const form = document.getElementById('loginForm');
+            const passwordInput = document.getElementById('password');
+            const errorMessage = document.getElementById('errorMessage');
+            const loginBtn = document.getElementById('loginBtn');
+
+            // Check if already authenticated
+            checkAuth();
+
+            async function checkAuth() {
+                try {
+                    const response = await fetch('/api/prep-dashboard/auth');
+                    const data = await response.json();
+                    if (data.authenticated) {
+                        window.location.href = '/dashboard/';
+                    }
+                } catch (e) {
+                    // Not authenticated, stay on login page
+                }
+            }
+
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+
+                const password = passwordInput.value.trim();
+                if (!password) {
+                    showError('Please enter a password');
+                    return;
+                }
+
+                // Disable button and show loading
+                loginBtn.disabled = true;
+                loginBtn.textContent = 'Logging in...';
+                hideError();
+
+                try {
+                    const response = await fetch('/api/prep-dashboard/auth', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ password })
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok && data.success) {
+                        // Redirect to dashboard
+                        window.location.href = '/dashboard/';
+                    } else {
+                        showError(data.error || 'Incorrect password');
+                        loginBtn.disabled = false;
+                        loginBtn.textContent = 'Enter Dashboard';
+                        passwordInput.value = '';
+                        passwordInput.focus();
+                    }
+                } catch (error) {
+                    showError('Connection error. Please try again.');
+                    loginBtn.disabled = false;
+                    loginBtn.textContent = 'Enter Dashboard';
+                }
+            });
+
+            function showError(message) {
+                errorMessage.textContent = message;
+                errorMessage.style.display = 'block';
+            }
+
+            function hideError() {
+                errorMessage.style.display = 'none';
+            }
+
+            // Focus password input on load
+            passwordInput.focus();
+        });
+    </script>
+</body>
+</html>
