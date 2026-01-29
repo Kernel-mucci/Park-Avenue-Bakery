@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prep Dashboard | Park Avenue Bakery</title>
+    <meta name="robots" content="noindex, nofollow">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600;700&family=Questrial&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="dashboard.css">
+</head>
+<body class="dashboard-page">
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="loading-spinner"></div>
+        <p>Loading dashboard...</p>
+    </div>
+
+    <!-- Main Dashboard -->
+    <div id="dashboardContent" class="dashboard-container" style="display: none;">
+        <!-- Header -->
+        <header class="dashboard-header">
+            <div class="header-left">
+                <span class="header-icon">&#127838;</span>
+                <h1>Prep Dashboard</h1>
+            </div>
+            <div class="header-center">
+                <span id="currentDate" class="current-date"></span>
+                <span id="currentTime" class="current-time"></span>
+            </div>
+            <div class="header-right">
+                <button id="refreshBtn" class="btn btn-icon" title="Refresh">
+                    &#8635; Refresh
+                </button>
+                <button id="printBtn" class="btn btn-icon" title="Print Bake List">
+                    &#128424; Print
+                </button>
+                <button id="logoutBtn" class="btn btn-logout" title="Logout">
+                    Logout
+                </button>
+            </div>
+        </header>
+
+        <!-- Alerts Section -->
+        <div id="alertsSection" class="alerts-section" style="display: none;">
+            <div class="alert alert-warning">
+                <span class="alert-icon">&#9888;</span>
+                <span class="alert-text">
+                    <strong>SAME-DAY ALERTS:</strong>
+                    <span id="alertCount">0</span> orders need attention
+                </span>
+                <button id="viewAlertsBtn" class="btn btn-small">View Details</button>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <main class="dashboard-main">
+            <!-- Bake List Section -->
+            <section class="bake-list-section">
+                <h2 class="section-title">
+                    <span id="bakeListTitle">Today's Bake List</span>
+                </h2>
+
+                <!-- Breads -->
+                <div class="category-section">
+                    <h3 class="category-title">Breads</h3>
+                    <ul id="breadsList" class="bake-list">
+                        <li class="empty-message">No bread orders</li>
+                    </ul>
+                </div>
+
+                <!-- Bars -->
+                <div class="category-section">
+                    <h3 class="category-title">Bars</h3>
+                    <ul id="barsList" class="bake-list">
+                        <li class="empty-message">No bar orders</li>
+                    </ul>
+                </div>
+
+                <!-- Cookies -->
+                <div class="category-section">
+                    <h3 class="category-title">Cookies</h3>
+                    <ul id="cookiesList" class="bake-list">
+                        <li class="empty-message">No cookie orders</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Pickup Schedule Section -->
+            <section class="schedule-section">
+                <h2 class="section-title">Pickup Schedule</h2>
+
+                <div id="scheduleList" class="schedule-list">
+                    <div class="empty-message">No pickups scheduled</div>
+                </div>
+
+                <!-- Totals -->
+                <div class="totals-section">
+                    <div class="total-item">
+                        <span class="total-icon">&#128230;</span>
+                        <span class="total-label">Total Orders</span>
+                        <span id="totalOrders" class="total-value">0</span>
+                    </div>
+                    <div class="total-item">
+                        <span class="total-icon">&#127838;</span>
+                        <span class="total-label">Total Items</span>
+                        <span id="totalItems" class="total-value">0</span>
+                    </div>
+                </div>
+
+                <!-- Category Breakdown -->
+                <div class="category-breakdown">
+                    <div class="breakdown-item">
+                        <span class="breakdown-label">Breads:</span>
+                        <span id="totalBreads" class="breakdown-value">0</span>
+                    </div>
+                    <div class="breakdown-item">
+                        <span class="breakdown-label">Bars:</span>
+                        <span id="totalBars" class="breakdown-value">0</span>
+                    </div>
+                    <div class="breakdown-item">
+                        <span class="breakdown-label">Cookies:</span>
+                        <span id="totalCookies" class="breakdown-value">0</span>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Date Navigation -->
+        <footer class="dashboard-footer">
+            <div class="date-nav">
+                <button id="prevDayBtn" class="btn btn-nav">&larr; Yesterday</button>
+                <button id="todayBtn" class="btn btn-today">Today</button>
+                <button id="nextDayBtn" class="btn btn-nav">Tomorrow &rarr;</button>
+            </div>
+            <div id="lastRefresh" class="last-refresh">
+                Last refreshed: --
+            </div>
+        </footer>
+    </div>
+
+    <!-- Same-Day Orders Modal -->
+    <div id="alertsModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Same-Day Orders</h3>
+                <button id="closeModalBtn" class="modal-close">&times;</button>
+            </div>
+            <div id="alertsModalBody" class="modal-body">
+                <!-- Populated by JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <script src="dashboard.js"></script>
+</body>
+</html>
