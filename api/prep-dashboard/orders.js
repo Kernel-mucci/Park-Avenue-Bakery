@@ -118,7 +118,7 @@ function formatTime12Hour(time24) {
 // CLOVER API INTEGRATION
 // ============================================
 
-async function fetchCloverOrders(date) {
+async function fetchCloverOrders(targetPickupDate) {
     const CLOVER_API_KEY = process.env.CLOVER_API_KEY;
     const CLOVER_MERCHANT_ID = process.env.CLOVER_MERCHANT_ID;
 
@@ -126,10 +126,17 @@ async function fetchCloverOrders(date) {
         throw new Error('Clover credentials not configured');
     }
 
-    const { start, end } = formatDateForClover(date);
+    // Fetch orders from past 14 days to capture advance orders
+    // Orders placed up to 2 weeks ago might have a pickup date of today or future
+    const today = new Date();
+    const twoWeeksAgo = new Date(today);
+    twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
+
+    const startTime = twoWeeksAgo.getTime();
+    const endTime = today.getTime() + (24 * 60 * 60 * 1000); // Include today
 
     // Fetch orders from Clover with line items expanded
-    const url = `https://api.clover.com/v3/merchants/${CLOVER_MERCHANT_ID}/orders?expand=lineItems&filter=payType!=null&filter=createdTime>=${start}&filter=createdTime<=${end}&limit=500`;
+    const url = `https://api.clover.com/v3/merchants/${CLOVER_MERCHANT_ID}/orders?expand=lineItems&filter=payType!=null&filter=createdTime>=${startTime}&filter=createdTime<=${endTime}&limit=500`;
 
     const response = await fetch(url, {
         headers: {
@@ -162,6 +169,7 @@ function processOrders(orders, targetDate) {
     const pickupSchedule = {};
     const sameDayOrders = [];
     let totalItems = 0;
+    let filteredOrderCount = 0; // Count only orders matching target pickup date
 
     const today = getMountainTime();
     const todayStr = today.toISOString().split('T')[0];
@@ -199,6 +207,7 @@ function processOrders(orders, targetDate) {
         }
 
         // FALLBACK: Use order creation time converted to Mountain Time
+        // Only use this fallback for orders without explicit pickup info
         if (!pickupTime && order.createdTime) {
             const createdDate = new Date(order.createdTime);
             // Convert to Mountain Time
@@ -212,6 +221,14 @@ function processOrders(orders, targetDate) {
             const day = mtTime.getDate().toString().padStart(2, '0');
             pickupDate = `${year}-${month}-${day}`;
         }
+
+        // FILTER: Only include orders for the target pickup date
+        if (pickupDate !== targetDate) {
+            return; // Skip this order - wrong pickup date
+        }
+
+        // Count this order (it passed the filter)
+        filteredOrderCount++;
 
         // Check if this is a same-day order (placed today for today)
         if (isToday && pickupDate === todayStr) {
@@ -305,9 +322,9 @@ function processOrders(orders, targetDate) {
             hasSameDayAlert: sameDayOrders.some(o => o.time === formatTime12Hour(slot.time))
         }));
 
-    // Calculate totals
+    // Calculate totals (using filteredOrderCount, not all fetched orders)
     const totals = {
-        orders: orders.length,
+        orders: filteredOrderCount,
         items: totalItems,
         breads: sortedBakeList.breads.reduce((sum, item) => sum + item.quantity, 0),
         bars: sortedBakeList.bars.reduce((sum, item) => sum + item.quantity, 0),
