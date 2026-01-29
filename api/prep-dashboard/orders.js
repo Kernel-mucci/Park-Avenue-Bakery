@@ -173,20 +173,29 @@ function processOrders(orders, targetDate) {
         let pickupDate = null;
 
         // Check if order has note with pickup info (from our checkout flow)
-        if (order.note) {
-            // Our checkout stores: "Pickup: YYYY-MM-DD at HH:MM"
-            const pickupMatch = order.note.match(/Pickup:\s*(\d{4}-\d{2}-\d{2})\s*at\s*(\d{2}:\d{2})/i);
-            if (pickupMatch) {
-                pickupDate = pickupMatch[1];
-                pickupTime = pickupMatch[2];
-            }
+        // Format: "Pickup: YYYY-MM-DD at HH:MM"
+        const noteText = order.note || '';
+        const pickupMatch = noteText.match(/Pickup:\s*(\d{4}-\d{2}-\d{2})\s*at\s*(\d{1,2}:\d{2})/i);
+        if (pickupMatch) {
+            pickupDate = pickupMatch[1];
+            // Ensure time is in HH:MM format (pad single digit hours)
+            const timeParts = pickupMatch[2].split(':');
+            pickupTime = timeParts[0].padStart(2, '0') + ':' + timeParts[1];
         }
 
-        // If no pickup info in note, use order creation time
+        // If no pickup info in note, use order creation time converted to Mountain Time
         if (!pickupTime && order.createdTime) {
             const createdDate = new Date(order.createdTime);
-            pickupTime = createdDate.toTimeString().substring(0, 5);
-            pickupDate = createdDate.toISOString().split('T')[0];
+            // Convert to Mountain Time
+            const mtTime = new Date(createdDate.toLocaleString('en-US', { timeZone: 'America/Denver' }));
+            const hours = mtTime.getHours().toString().padStart(2, '0');
+            const minutes = mtTime.getMinutes().toString().padStart(2, '0');
+            pickupTime = `${hours}:${minutes}`;
+            // Get date in YYYY-MM-DD format
+            const year = mtTime.getFullYear();
+            const month = (mtTime.getMonth() + 1).toString().padStart(2, '0');
+            const day = mtTime.getDate().toString().padStart(2, '0');
+            pickupDate = `${year}-${month}-${day}`;
         }
 
         // Check if this is a same-day order (placed today for today)
@@ -217,7 +226,17 @@ function processOrders(orders, targetDate) {
         if (order.lineItems && order.lineItems.elements) {
             order.lineItems.elements.forEach(item => {
                 const name = item.name || 'Unknown Item';
-                const quantity = item.unitQty || item.quantity || 1;
+                // Clover stores unitQty as quantity * 1000 (so 1 item = 1000)
+                // Use unitQty/1000 if available, otherwise fall back to quantity field
+                let quantity = 1;
+                if (item.unitQty !== undefined && item.unitQty !== null) {
+                    quantity = Math.round(item.unitQty / 1000);
+                } else if (item.quantity !== undefined && item.quantity !== null) {
+                    quantity = item.quantity;
+                }
+                // Ensure quantity is at least 1
+                quantity = Math.max(1, quantity);
+
                 const category = categorizeProduct(name);
 
                 // Add to bake list
