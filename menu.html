@@ -41,7 +41,35 @@
     <!-- Menu Section with Cart -->
     <section class="menu-ordering">
         <div class="container">
-            <div class="menu-layout">
+            <!-- Pickup Date Selection -->
+            <div class="pickup-date-section" id="pickupDateSection">
+                <div class="pickup-date-header">
+                    <h2>When would you like to pick up?</h2>
+                    <p>Select a pickup date to see available items. Some specialty breads are only available on specific days.</p>
+                </div>
+                <div class="pickup-date-form">
+                    <label for="pickupDate">Pickup Date:</label>
+                    <input type="date" id="pickupDate" name="pickupDate" required>
+                    <button type="button" id="loadMenuBtn" class="btn-primary">View Available Items</button>
+                </div>
+                <div class="pickup-date-info" id="pickupDateInfo"></div>
+            </div>
+
+            <!-- Specialty Bread Schedule Notice -->
+            <div class="specialty-schedule-notice" id="specialtyNotice" style="display: none;">
+                <h3><i class="fas fa-info-circle"></i> Specialty Bread Schedule</h3>
+                <div class="specialty-schedule-grid">
+                    <div class="schedule-item"><strong>Monday:</strong> Norwegian Farm</div>
+                    <div class="schedule-item"><strong>Tuesday:</strong> Sourdough Rye</div>
+                    <div class="schedule-item"><strong>Wednesday:</strong> Old World Italian, Blackfoot</div>
+                    <div class="schedule-item"><strong>Thursday:</strong> Golden Raisin Pecan</div>
+                    <div class="schedule-item"><strong>Friday:</strong> Old World Italian, Challah, Cranberry Wild Rice</div>
+                    <div class="schedule-item"><strong>Saturday:</strong> Rustic Multigrain</div>
+                </div>
+                <p class="cutoff-notice">Order by 5pm the day before for specialty breads. Same-day orders for regular items must be placed before 10am.</p>
+            </div>
+
+            <div class="menu-layout" id="menuLayout" style="display: none;">
                 <!-- Menu Categories & Items -->
                 <div class="menu-items-section">
                     <!-- Category Filters -->
@@ -949,6 +977,7 @@
         </div>
     </footer>
 
+    <script src="order-guardrails.js"></script>
     <script src="cart.js"></script>
     <script src="script.js"></script>
 </body>
