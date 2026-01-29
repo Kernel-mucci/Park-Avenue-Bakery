@@ -181,6 +181,12 @@ const EVERYDAY_BREADS = {
     dailyLimit: 8,
     sameDayAllowed: true,
     sameDayCutoffHour: 10
+  },
+  'test-1': { // Staff test item
+    name: 'Test Item',
+    dailyLimit: 999,
+    sameDayAllowed: true,
+    sameDayCutoffHour: 23 // Available until 11 PM
   }
 };
 
