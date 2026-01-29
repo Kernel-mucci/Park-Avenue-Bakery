@@ -3,13 +3,55 @@
 
 // Server-side price catalog to prevent client-side price tampering
 const PRICE_CATALOG = {
+    // Test item (keep for testing)
     'test-1': 0.50,
-    '1': 8.50,
-    '2': 4.50,
-    '3': 7.50,
-    '4': 5.00,
-    '5': 6.50,
-    '6': 10.50
+
+    // Breads
+    'bread-1': 7.75,   // 7 Grain Pan Loaf
+    'bread-2': 4.00,   // Baguette
+    'bread-3': 7.50,   // Big Sky Country Loaf
+    'bread-4': 8.25,   // Blackfoot
+    'bread-5': 5.50,   // Boules
+    'bread-6': 4.00,   // Ciabatta
+    'bread-7': 9.25,   // Cranberry Wild Rice
+    'bread-8': 2.50,   // Demi Baguette
+    'bread-9': 4.00,   // Epi
+    'bread-10': 1.00,  // Ficelli
+    'bread-11': 6.50,  // Focaccia
+    'bread-12': 7.25,  // French Pan Loaf
+    'bread-13': 9.25,  // Golden Raisin Pecan
+    'bread-14': 5.50,  // Jocko
+    'bread-15': 1.25,  // Mini Ciabatta
+    'bread-16': 8.50,  // Norwegian Farm
+    'bread-17': 7.50,  // Old World Italian
+    'bread-18': 5.50,  // Pizza Dough
+    'bread-19': 7.45,  // Potato Rolls (6-pack)
+    'bread-20': 8.25,  // Rustic Multigrain
+    'bread-21': 8.00,  // Sourdough
+    'bread-22': 8.00,  // Sourdough Rustic Loaf
+
+    // Bars
+    'bar-1': 4.50,     // Flourless Brownies
+    'bar-2': 4.50,     // Lemon Bars
+    'bar-3': 4.50,     // Chocolate Chip Peanut Butter Bar
+    'bar-4': 4.00,     // Pumpkin Bars
+    'bar-5': 4.00,     // Raspberry Crumble Bars
+    'bar-6': 4.50,     // Revel Bars
+    'bar-7': 4.50,     // Salted Caramel Bars
+    'bar-8': 4.50,     // Samoa Bars
+    'bar-9': 4.50,     // Truffle Brownies
+    'bar-10': 4.50,    // Turtle Brownie
+
+    // Cookies
+    'cookie-1': 2.75,  // Brown Butter Chocolate Chip Cookie
+    'cookie-2': 3.00,  // Carrot Coconut Cookie
+    'cookie-3': 2.50,  // Coconut Oatmeal Cookie
+    'cookie-4': 2.75,  // Flourless Peanut Butter Chocolate Chip
+    'cookie-5': 2.50,  // Molasses Cookie
+    'cookie-6': 2.75,  // Monster Cookie
+    'cookie-7': 2.50,  // Peanut Butter Cookie
+    'cookie-8': 2.50,  // Snickerdoodle
+    'cookie-9': 3.50   // Sugar Cookies - Assorted
 };
 
 export default async function handler(req, res) {
