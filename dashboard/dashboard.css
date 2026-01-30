@@ -419,10 +419,213 @@ body {
     box-shadow: 0 2px 10px rgba(74, 52, 34, 0.1);
 }
 
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.section-header .section-title {
+    margin-bottom: 0;
+}
+
+.btn-print {
+    background: var(--butter);
+    color: var(--deep-brown);
+    font-size: 0.8rem;
+}
+
+.btn-print:hover {
+    background: var(--sage);
+}
+
 .schedule-list {
     margin-bottom: 1.5rem;
 }
 
+/* Expandable Time Slots */
+.time-slot {
+    margin-bottom: 0.75rem;
+    border-radius: 8px;
+    background: var(--cream);
+    border-left: 4px solid var(--sage);
+    overflow: hidden;
+    transition: all 0.2s ease;
+}
+
+.time-slot.upcoming {
+    border-left-color: var(--alert-yellow);
+    background: #fffbeb;
+}
+
+.time-slot.overdue {
+    border-left-color: var(--alert-red);
+    background: #fef2f2;
+}
+
+.time-slot.all-ready {
+    border-left-color: var(--success-green);
+    background: #f0fdf4;
+}
+
+.time-slot-header {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    gap: 0.75rem;
+    transition: background 0.2s ease;
+}
+
+.time-slot-header:hover {
+    background: rgba(0, 0, 0, 0.03);
+}
+
+.expand-icon {
+    color: var(--warm-brown);
+    font-size: 0.75rem;
+    width: 1rem;
+    text-align: center;
+}
+
+.slot-time {
+    font-weight: 600;
+    color: var(--deep-brown);
+    min-width: 90px;
+}
+
+.slot-summary {
+    flex: 1;
+    color: var(--warm-brown);
+}
+
+.slot-ready-status {
+    font-size: 0.85rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    background: rgba(0, 0, 0, 0.05);
+    color: var(--warm-brown);
+}
+
+.time-slot.all-ready .slot-ready-status {
+    background: var(--success-green);
+    color: white;
+}
+
+.btn-print-slot {
+    background: transparent;
+    border: none;
+    padding: 0.25rem 0.5rem;
+    font-size: 1rem;
+    cursor: pointer;
+    color: var(--warm-brown);
+    transition: color 0.2s ease;
+}
+
+.btn-print-slot:hover {
+    color: var(--deep-brown);
+}
+
+/* Expanded Orders Container */
+.slot-orders {
+    padding: 0.5rem 1rem 1rem;
+    border-top: 1px dashed var(--sage);
+    background: white;
+}
+
+/* Order Cards */
+.order-card {
+    background: var(--cream);
+    border: 1px solid var(--sage);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+    transition: all 0.2s ease;
+}
+
+.order-card:last-child {
+    margin-bottom: 0;
+}
+
+.order-card.ready {
+    background: #e8f5e9;
+    border-color: var(--success-green);
+}
+
+.order-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.order-number {
+    font-weight: 700;
+    color: var(--deep-brown);
+    font-size: 1rem;
+}
+
+.ready-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    color: var(--warm-brown);
+    cursor: pointer;
+}
+
+.ready-checkbox input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    accent-color: var(--success-green);
+}
+
+.order-card-customer {
+    font-size: 0.95rem;
+    color: var(--deep-brown);
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px dashed var(--butter);
+}
+
+.order-card-items {
+    margin-bottom: 0.75rem;
+}
+
+.order-item {
+    display: flex;
+    gap: 0.5rem;
+    padding: 0.25rem 0;
+    font-size: 0.9rem;
+}
+
+.order-item .item-qty {
+    font-weight: 600;
+    color: var(--terracotta);
+    min-width: 35px;
+}
+
+.order-item .item-name {
+    color: var(--deep-brown);
+}
+
+.order-card-footer {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8rem;
+    color: var(--warm-brown);
+    padding-top: 0.5rem;
+    border-top: 1px dashed var(--butter);
+}
+
+.order-total {
+    font-weight: 600;
+    color: var(--terracotta);
+}
+
+/* Legacy schedule-item (keep for backward compatibility) */
 .schedule-item {
     display: flex;
     align-items: center;
@@ -664,71 +867,253 @@ body {
 }
 
 /* ============================================
+   PRINT CONTAINER
+   ============================================ */
+
+.print-container {
+    display: none;
+}
+
+.print-container.printing {
+    display: block;
+}
+
+/* Print Page Styles (visible only when printing) */
+.print-page {
+    background: white;
+    padding: 1.5rem;
+}
+
+.print-header {
+    text-align: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #000;
+}
+
+.print-header h1 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.75rem;
+    margin-bottom: 0.25rem;
+}
+
+.print-header h2 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.25rem;
+    font-weight: normal;
+    margin-bottom: 0.5rem;
+}
+
+.print-header p {
+    margin: 0.25rem 0;
+}
+
+.print-header .generated-time {
+    font-size: 0.85rem;
+    color: #666;
+}
+
+.print-section {
+    margin-bottom: 1.5rem;
+}
+
+.print-section h3 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.1rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border-bottom: 1px solid #ccc;
+    padding-bottom: 0.25rem;
+    margin-bottom: 0.5rem;
+}
+
+.print-bake-items {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.print-bake-items li {
+    display: flex;
+    align-items: center;
+    padding: 0.4rem 0;
+    border-bottom: 1px dotted #ccc;
+}
+
+.print-checkbox {
+    font-size: 1.25rem;
+    margin-right: 0.75rem;
+    width: 1.5rem;
+}
+
+.print-bake-items .item-name {
+    flex: 1;
+}
+
+.print-bake-items .item-dots {
+    flex: 1;
+    border-bottom: 1px dotted #999;
+    margin: 0 0.5rem;
+    min-width: 2rem;
+}
+
+.print-bake-items .item-qty {
+    font-weight: bold;
+    font-size: 1.1rem;
+    min-width: 2rem;
+    text-align: right;
+}
+
+.print-totals {
+    margin-top: 2rem;
+    padding: 1rem;
+    border: 1px solid #ccc;
+    background: #f9f9f9;
+}
+
+.print-schedule-overview {
+    margin-top: 1rem;
+}
+
+.print-schedule-slot {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+    border-bottom: 1px dotted #ccc;
+}
+
+.print-schedule-slot .slot-time {
+    font-weight: bold;
+    min-width: 100px;
+}
+
+/* Pickup Sheet Print Styles */
+.print-pickup-sheet .print-orders {
+    margin-top: 1.5rem;
+}
+
+.print-order {
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    page-break-inside: avoid;
+}
+
+.print-order-header {
+    border-bottom: 2px solid #000;
+    padding-bottom: 0.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.print-order-header .order-number {
+    font-size: 1.2rem;
+    font-weight: bold;
+}
+
+.print-order-customer {
+    margin-bottom: 1rem;
+}
+
+.print-order-customer p {
+    margin: 0.25rem 0;
+}
+
+.print-order-items {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 1rem 0;
+}
+
+.print-order-items li {
+    display: flex;
+    align-items: center;
+    padding: 0.4rem 0;
+    gap: 0.5rem;
+}
+
+.print-order-items .item-qty {
+    font-weight: bold;
+    min-width: 40px;
+}
+
+.print-slot-total {
+    margin-top: 2rem;
+    padding: 1rem;
+    border-top: 2px solid #000;
+    text-align: center;
+    font-size: 1.1rem;
+}
+
+.page-break {
+    page-break-after: always;
+}
+
+.page-break-before {
+    page-break-before: always;
+}
+
+/* ============================================
    PRINT STYLES
    ============================================ */
 
 @media print {
+    /* Hide everything except print container when printing */
     body {
-        background: white;
+        background: white !important;
         font-size: 12pt;
     }
 
-    .dashboard-header .header-right,
-    .alerts-section:not(.has-alerts),
-    .dashboard-footer,
-    .btn,
-    .loading-overlay {
+    body > *:not(.print-container) {
         display: none !important;
     }
 
-    .dashboard-container {
-        max-width: 100%;
+    .print-container {
+        display: block !important;
+    }
+
+    .print-container.printing {
+        display: block !important;
+    }
+
+    .print-page {
         padding: 0;
+        margin: 0;
     }
 
-    .dashboard-header {
-        box-shadow: none;
-        border-bottom: 2px solid #000;
-        border-radius: 0;
-        padding: 0.5rem 0;
+    .print-header {
+        margin-bottom: 1.5rem;
     }
 
-    .dashboard-main {
-        display: block;
+    .print-order {
+        border: 1px solid #000;
     }
 
-    .bake-list-section,
-    .schedule-section {
-        box-shadow: none;
-        border: 1px solid #ccc;
-        margin-bottom: 1rem;
-        page-break-inside: avoid;
-    }
-
-    .bake-list .checkbox {
-        border: 2px solid #000;
-    }
-
-    .bake-list li {
-        border-bottom: 1px dotted #999;
-    }
-
-    .schedule-section {
-        display: none;
-    }
-
-    .alerts-section.has-alerts {
-        border: 2px solid #000;
-        background: #fff;
-        margin-bottom: 1rem;
-    }
-
-    .alert {
-        background: #fff !important;
-        border: none !important;
+    .print-checkbox {
+        font-size: 1.5rem;
     }
 
     @page {
-        margin: 1cm;
+        margin: 1.5cm;
+        size: letter;
+    }
+
+    /* Ensure page breaks work */
+    .page-break {
+        page-break-after: always;
+        display: block;
+        height: 0;
+    }
+
+    .page-break-before {
+        page-break-before: always;
+    }
+
+    .print-order {
+        page-break-inside: avoid;
+    }
+
+    .print-section {
+        page-break-inside: avoid;
     }
 }

@@ -91,20 +91,6 @@ function getMountainTime() {
     return new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Denver' }));
 }
 
-function formatDateForClover(dateString) {
-    // Convert YYYY-MM-DD to timestamp range for Clover API
-    const date = new Date(dateString + 'T00:00:00');
-    const startOfDay = new Date(date);
-    startOfDay.setHours(0, 0, 0, 0);
-    const endOfDay = new Date(date);
-    endOfDay.setHours(23, 59, 59, 999);
-
-    return {
-        start: startOfDay.getTime(),
-        end: endOfDay.getTime()
-    };
-}
-
 function formatTime12Hour(time24) {
     if (!time24) return 'N/A';
     const [hours, minutes] = time24.split(':');
@@ -118,7 +104,7 @@ function formatTime12Hour(time24) {
 // CLOVER API INTEGRATION
 // ============================================
 
-async function fetchCloverOrders(targetPickupDate) {
+async function fetchCloverOrders() {
     const CLOVER_API_KEY = process.env.CLOVER_API_KEY;
     const CLOVER_MERCHANT_ID = process.env.CLOVER_MERCHANT_ID;
 
@@ -174,6 +160,8 @@ function processOrders(orders, targetDate) {
     const today = getMountainTime();
     const todayStr = today.toISOString().split('T')[0];
     const isToday = targetDate === todayStr;
+    const currentHour = today.getHours();
+    const currentMinutes = today.getMinutes();
 
     orders.forEach(order => {
         // Extract pickup time from order - check multiple sources
@@ -230,20 +218,70 @@ function processOrders(orders, targetDate) {
         // Count this order (it passed the filter)
         filteredOrderCount++;
 
+        // Extract customer info from Clover order
+        const customerName = order.customers?.elements?.[0]?.firstName
+            ? `${order.customers.elements[0].firstName} ${order.customers.elements[0].lastName || ''}`.trim()
+            : (order.title || 'Guest');
+        const customerPhone = order.customers?.elements?.[0]?.phoneNumbers?.elements?.[0]?.phoneNumber
+            || order.phone
+            || '';
+
+        // Get order items (excluding hidden pickup metadata)
+        const orderItems = [];
+        if (order.lineItems && order.lineItems.elements) {
+            order.lineItems.elements.forEach(item => {
+                const name = item.name || 'Unknown Item';
+
+                // Skip hidden pickup info items
+                if (name.startsWith('[PICKUP:')) {
+                    return;
+                }
+
+                let quantity = 1;
+                if (item.unitQty !== undefined && item.unitQty !== null) {
+                    quantity = Math.round(item.unitQty / 1000);
+                } else if (item.quantity !== undefined && item.quantity !== null) {
+                    quantity = item.quantity;
+                }
+                quantity = Math.max(1, quantity);
+
+                orderItems.push({ name, quantity });
+            });
+        }
+
+        // Calculate order total
+        const orderTotal = order.total ? (order.total / 100).toFixed(2) : '0.00';
+
+        // Build detailed order object
+        const detailedOrder = {
+            id: order.id,
+            orderNumber: order.id.slice(-8).toUpperCase(),
+            customerName,
+            customerPhone: formatPhoneNumber(customerPhone),
+            pickupDate,
+            pickupTime,
+            pickupTimeDisplay: formatTime12Hour(pickupTime),
+            placedAt: order.createdTime ? new Date(order.createdTime).toISOString() : null,
+            placedAtDisplay: formatPlacedTime(order.createdTime, targetDate),
+            items: orderItems,
+            itemCount: orderItems.reduce((sum, item) => sum + item.quantity, 0),
+            total: orderTotal
+        };
+
         // Check if this is a same-day order (placed today for today)
         if (isToday && pickupDate === todayStr) {
+            // Convert order creation time to Mountain Time for accurate same-day detection
             const orderTime = new Date(order.createdTime);
-            const hour = orderTime.getHours();
-            // Orders placed after 10am for same-day pickup are flagged
+            const mtOrderTime = new Date(orderTime.toLocaleString('en-US', { timeZone: 'America/Denver' }));
+            const hour = mtOrderTime.getHours();
+            // Orders placed after 10am Mountain Time for same-day pickup are flagged
             if (hour >= 10) {
-                // Count items excluding hidden pickup metadata
-                const realItems = order.lineItems?.elements?.filter(
-                    item => !item.name?.startsWith('[PICKUP:')
-                ) || [];
                 sameDayOrders.push({
                     id: order.id,
+                    orderNumber: detailedOrder.orderNumber,
+                    customerName,
                     time: formatTime12Hour(pickupTime),
-                    items: realItems.length
+                    items: orderItems.reduce((sum, item) => sum + item.quantity, 0)
                 });
             }
         }
@@ -251,53 +289,48 @@ function processOrders(orders, targetDate) {
         // Aggregate pickup schedule by time slot (30-min buckets)
         if (pickupTime) {
             const [hours, minutes] = pickupTime.split(':');
-            const bucket = `${hours}:${parseInt(minutes) < 30 ? '00' : '30'}`;
+            const slotHour = parseInt(hours, 10);
+            const slotMinutes = parseInt(minutes, 10) < 30 ? 0 : 30;
+            const bucket = `${hours}:${slotMinutes.toString().padStart(2, '0')}`;
+
             if (!pickupSchedule[bucket]) {
-                pickupSchedule[bucket] = { time: bucket, orderCount: 0, itemCount: 0 };
-            }
-            pickupSchedule[bucket].orderCount++;
-        }
+                // Determine slot status (upcoming, overdue, etc.)
+                let status = 'normal';
+                if (isToday) {
+                    const slotTimeMinutes = slotHour * 60 + slotMinutes;
+                    const currentTimeMinutes = currentHour * 60 + currentMinutes;
 
-        // Process line items
-        if (order.lineItems && order.lineItems.elements) {
-            order.lineItems.elements.forEach(item => {
-                const name = item.name || 'Unknown Item';
-
-                // Skip hidden pickup info items (they're metadata, not real products)
-                if (name.startsWith('[PICKUP:')) {
-                    return;
-                }
-
-                // Clover stores unitQty as quantity * 1000 (so 1 item = 1000)
-                // Use unitQty/1000 if available, otherwise fall back to quantity field
-                let quantity = 1;
-                if (item.unitQty !== undefined && item.unitQty !== null) {
-                    quantity = Math.round(item.unitQty / 1000);
-                } else if (item.quantity !== undefined && item.quantity !== null) {
-                    quantity = item.quantity;
-                }
-                // Ensure quantity is at least 1
-                quantity = Math.max(1, quantity);
-
-                const category = categorizeProduct(name);
-
-                // Add to bake list
-                if (!bakeList[category][name]) {
-                    bakeList[category][name] = 0;
-                }
-                bakeList[category][name] += quantity;
-                totalItems += quantity;
-
-                // Update pickup schedule item count
-                if (pickupTime) {
-                    const [hours, minutes] = pickupTime.split(':');
-                    const bucket = `${hours}:${parseInt(minutes) < 30 ? '00' : '30'}`;
-                    if (pickupSchedule[bucket]) {
-                        pickupSchedule[bucket].itemCount += quantity;
+                    if (slotTimeMinutes < currentTimeMinutes) {
+                        status = 'overdue';
+                    } else if (slotTimeMinutes - currentTimeMinutes <= 60) {
+                        status = 'upcoming';
                     }
                 }
-            });
+
+                pickupSchedule[bucket] = {
+                    time: bucket,
+                    displayTime: formatTime12Hour(bucket),
+                    orderCount: 0,
+                    itemCount: 0,
+                    orders: [],
+                    status
+                };
+            }
+            pickupSchedule[bucket].orderCount++;
+            pickupSchedule[bucket].itemCount += detailedOrder.itemCount;
+            pickupSchedule[bucket].orders.push(detailedOrder);
         }
+
+        // Process line items for bake list
+        orderItems.forEach(item => {
+            const category = categorizeProduct(item.name);
+
+            if (!bakeList[category][item.name]) {
+                bakeList[category][item.name] = 0;
+            }
+            bakeList[category][item.name] += item.quantity;
+            totalItems += item.quantity;
+        });
     });
 
     // Convert bake list objects to sorted arrays
@@ -313,13 +346,14 @@ function processOrders(orders, targetDate) {
             .sort((a, b) => a.name.localeCompare(b.name))
     };
 
-    // Convert pickup schedule to sorted array
+    // Convert pickup schedule to sorted array with orders
     const sortedPickupSchedule = Object.values(pickupSchedule)
         .sort((a, b) => a.time.localeCompare(b.time))
         .map(slot => ({
             ...slot,
-            displayTime: formatTime12Hour(slot.time),
-            hasSameDayAlert: sameDayOrders.some(o => o.time === formatTime12Hour(slot.time))
+            hasSameDayAlert: sameDayOrders.some(o => o.time === slot.displayTime),
+            // Sort orders within slot by customer name
+            orders: slot.orders.sort((a, b) => a.customerName.localeCompare(b.customerName))
         }));
 
     // Calculate totals (using filteredOrderCount, not all fetched orders)
@@ -342,17 +376,65 @@ function processOrders(orders, targetDate) {
     };
 }
 
+// Format phone number for display
+function formatPhoneNumber(phone) {
+    if (!phone) return '';
+    const cleaned = phone.replace(/\D/g, '');
+    if (cleaned.length === 10) {
+        return `(${cleaned.slice(0, 3)}) ${cleaned.slice(3, 6)}-${cleaned.slice(6)}`;
+    }
+    if (cleaned.length === 11 && cleaned[0] === '1') {
+        return `(${cleaned.slice(1, 4)}) ${cleaned.slice(4, 7)}-${cleaned.slice(7)}`;
+    }
+    return phone;
+}
+
+// Format "placed at" time for display
+function formatPlacedTime(timestamp, targetDate) {
+    if (!timestamp) return 'Unknown';
+
+    const placedDate = new Date(timestamp);
+    const mtPlaced = new Date(placedDate.toLocaleString('en-US', { timeZone: 'America/Denver' }));
+
+    const hours = mtPlaced.getHours();
+    const minutes = mtPlaced.getMinutes().toString().padStart(2, '0');
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    const hour12 = hours % 12 || 12;
+    const timeStr = `${hour12}:${minutes} ${ampm}`;
+
+    // Get date strings for comparison
+    const placedDateStr = mtPlaced.toISOString().split('T')[0];
+    const today = getMountainTime();
+    const todayStr = today.toISOString().split('T')[0];
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayStr = yesterday.toISOString().split('T')[0];
+
+    if (placedDateStr === todayStr) {
+        return `${timeStr} today`;
+    } else if (placedDateStr === yesterdayStr) {
+        return `${timeStr} yesterday`;
+    } else {
+        // Format as "Jan 28" for older dates
+        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        return `${timeStr} ${monthNames[mtPlaced.getMonth()]} ${mtPlaced.getDate()}`;
+    }
+}
+
 // ============================================
 // MOCK DATA FOR DEVELOPMENT/DEMO
 // ============================================
 
 function getMockOrders(date) {
-    // Generate realistic mock data for testing
+    // Generate realistic mock data for testing with customer info
     const mockOrders = [
         {
-            id: 'mock-001',
+            id: 'MOCK001ABC',
             createdTime: new Date(date + 'T06:30:00').getTime(),
             note: `Pickup: ${date} at 08:00`,
+            total: 2450, // $24.50 in cents
+            title: 'John Smith',
+            phone: '4065551234',
             lineItems: {
                 elements: [
                     { name: 'Sourdough', quantity: 2 },
@@ -362,9 +444,12 @@ function getMockOrders(date) {
             }
         },
         {
-            id: 'mock-002',
+            id: 'MOCK002DEF',
             createdTime: new Date(date + 'T07:15:00').getTime(),
-            note: `Pickup: ${date} at 09:00`,
+            note: `Pickup: ${date} at 08:00`,
+            total: 1875, // $18.75
+            title: 'Sarah Johnson',
+            phone: '4065555678',
             lineItems: {
                 elements: [
                     { name: 'Norwegian Farm', quantity: 1 },
@@ -374,9 +459,12 @@ function getMockOrders(date) {
             }
         },
         {
-            id: 'mock-003',
+            id: 'MOCK003GHI',
             createdTime: new Date(date + 'T08:00:00').getTime(),
             note: `Pickup: ${date} at 10:00`,
+            total: 3250, // $32.50
+            title: 'Mike Wilson',
+            phone: '4065559012',
             lineItems: {
                 elements: [
                     { name: 'Blackfoot', quantity: 2 },
@@ -386,9 +474,12 @@ function getMockOrders(date) {
             }
         },
         {
-            id: 'mock-004',
+            id: 'MOCK004JKL',
             createdTime: new Date(date + 'T09:30:00').getTime(),
-            note: `Pickup: ${date} at 11:30`,
+            note: `Pickup: ${date} at 10:00`,
+            total: 2890, // $28.90
+            title: 'Emily Davis',
+            phone: '4065553456',
             lineItems: {
                 elements: [
                     { name: 'Focaccia', quantity: 2 },
@@ -398,9 +489,12 @@ function getMockOrders(date) {
             }
         },
         {
-            id: 'mock-005',
+            id: 'MOCK005MNO',
             createdTime: new Date(date + 'T10:45:00').getTime(),
             note: `Pickup: ${date} at 14:00`,
+            total: 1950, // $19.50
+            title: 'Robert Brown',
+            phone: '4065557890',
             lineItems: {
                 elements: [
                     { name: 'Sourdough Rustic Loaf', quantity: 1 },
@@ -454,7 +548,7 @@ export default async function handler(req, res) {
 
         // Try to fetch from Clover, fall back to mock data if unavailable
         try {
-            orders = await fetchCloverOrders(date);
+            orders = await fetchCloverOrders();
         } catch (cloverError) {
             console.warn('Clover API unavailable, using mock data:', cloverError.message);
             // Use mock data for development/demo

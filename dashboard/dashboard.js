@@ -6,10 +6,14 @@ class PrepDashboard {
         this.currentDate = this.getTodayString();
         this.refreshInterval = null;
         this.data = null;
+        this.expandedSlots = new Set(); // Track which time slots are expanded
         this.init();
     }
 
     async init() {
+        // Clear old ready status at midnight
+        this.clearExpiredReadyStatus();
+
         // Check authentication first
         const isAuthenticated = await this.checkAuth();
         if (!isAuthenticated) {
@@ -32,6 +36,9 @@ class PrepDashboard {
 
         // Setup auto-refresh (every 5 minutes)
         this.refreshInterval = setInterval(() => this.loadData(), 5 * 60 * 1000);
+
+        // Check for midnight reset every minute
+        setInterval(() => this.clearExpiredReadyStatus(), 60 * 1000);
     }
 
     async checkAuth() {
@@ -58,9 +65,14 @@ class PrepDashboard {
             this.loadData();
         });
 
-        // Print button
+        // Print bake list button
         document.getElementById('printBtn')?.addEventListener('click', () => {
-            window.print();
+            this.printBakeList();
+        });
+
+        // Print all pickup sheets button
+        document.getElementById('printAllSheetsBtn')?.addEventListener('click', () => {
+            this.printAllPickupSheets();
         });
 
         // Logout button
@@ -111,6 +123,7 @@ class PrepDashboard {
         const date = new Date(this.currentDate + 'T12:00:00');
         date.setDate(date.getDate() + days);
         this.currentDate = date.toISOString().split('T')[0];
+        this.expandedSlots.clear(); // Clear expanded slots when changing date
         this.loadData();
     }
 
@@ -197,7 +210,7 @@ class PrepDashboard {
         this.renderBakeList('barsList', this.data.bakeList?.bars || []);
         this.renderBakeList('cookiesList', this.data.bakeList?.cookies || []);
 
-        // Render schedule
+        // Render schedule with expandable slots
         this.renderSchedule(this.data.pickupSchedule || []);
 
         // Render totals
@@ -237,13 +250,331 @@ class PrepDashboard {
             return;
         }
 
-        scheduleEl.innerHTML = schedule.map(slot => `
-            <div class="schedule-item ${slot.hasSameDayAlert ? 'has-alert' : ''}">
-                <span class="schedule-time">${slot.displayTime}</span>
-                <span class="schedule-orders">${slot.orderCount} order${slot.orderCount !== 1 ? 's' : ''} (${slot.itemCount} items)</span>
-                ${slot.hasSameDayAlert ? '<span class="schedule-alert">⚠</span>' : ''}
+        scheduleEl.innerHTML = schedule.map(slot => {
+            const isExpanded = this.expandedSlots.has(slot.time);
+            const readyCount = this.getReadyCountForSlot(slot);
+            const allReady = readyCount === slot.orders.length && slot.orders.length > 0;
+
+            // Build status class
+            let statusClass = slot.status || 'normal';
+            if (allReady) statusClass = 'all-ready';
+
+            return `
+                <div class="time-slot ${statusClass} ${isExpanded ? 'expanded' : ''}" data-time="${slot.time}">
+                    <div class="time-slot-header" onclick="window.dashboard.toggleSlot('${slot.time}')">
+                        <span class="expand-icon">${isExpanded ? '▼' : '▶'}</span>
+                        <span class="slot-time">${slot.displayTime}</span>
+                        <span class="slot-summary">
+                            ${slot.orderCount} order${slot.orderCount !== 1 ? 's' : ''} (${slot.itemCount} items)
+                        </span>
+                        <span class="slot-ready-status">
+                            ${allReady ? '✓ Ready' : `${readyCount}/${slot.orderCount}`}
+                        </span>
+                        <button class="btn-print-slot" onclick="event.stopPropagation(); window.dashboard.printSlot('${slot.time}')" title="Print pickup sheet">
+                            &#128424;
+                        </button>
+                    </div>
+                    ${isExpanded ? this.renderSlotOrders(slot) : ''}
+                </div>
+            `;
+        }).join('');
+    }
+
+    renderSlotOrders(slot) {
+        if (!slot.orders || slot.orders.length === 0) {
+            return '<div class="slot-orders"><div class="empty-message">No orders</div></div>';
+        }
+
+        return `
+            <div class="slot-orders">
+                ${slot.orders.map(order => this.renderOrderCard(order)).join('')}
+            </div>
+        `;
+    }
+
+    renderOrderCard(order) {
+        const isReady = this.isOrderReady(order.id);
+        return `
+            <div class="order-card ${isReady ? 'ready' : ''}" data-order-id="${order.id}">
+                <div class="order-card-header">
+                    <span class="order-number">Order #${this.escapeHtml(order.orderNumber)}</span>
+                    <label class="ready-checkbox">
+                        Ready:
+                        <input type="checkbox"
+                               ${isReady ? 'checked' : ''}
+                               onchange="window.dashboard.toggleOrderReady('${order.id}', this.checked)">
+                    </label>
+                </div>
+                <div class="order-card-customer">
+                    <strong>${this.escapeHtml(order.customerName)}</strong>
+                    ${order.customerPhone ? ` • ${this.escapeHtml(order.customerPhone)}` : ''}
+                </div>
+                <div class="order-card-items">
+                    ${order.items.map(item => `
+                        <div class="order-item">
+                            <span class="item-qty">${item.quantity}x</span>
+                            <span class="item-name">${this.escapeHtml(item.name)}</span>
+                        </div>
+                    `).join('')}
+                </div>
+                <div class="order-card-footer">
+                    <span class="order-placed">Placed: ${this.escapeHtml(order.placedAtDisplay || 'Unknown')}</span>
+                    ${order.total && order.total !== '0.00' ? `<span class="order-total">$${order.total}</span>` : ''}
+                </div>
+            </div>
+        `;
+    }
+
+    toggleSlot(time) {
+        if (this.expandedSlots.has(time)) {
+            this.expandedSlots.delete(time);
+        } else {
+            this.expandedSlots.add(time);
+        }
+        this.renderSchedule(this.data?.pickupSchedule || []);
+    }
+
+    // Ready status management with localStorage
+    getReadyStatusKey() {
+        return `bakery_ready_status_${this.currentDate}`;
+    }
+
+    getReadyStatus() {
+        try {
+            const stored = localStorage.getItem(this.getReadyStatusKey());
+            return stored ? JSON.parse(stored) : {};
+        } catch (e) {
+            return {};
+        }
+    }
+
+    saveReadyStatus(status) {
+        try {
+            localStorage.setItem(this.getReadyStatusKey(), JSON.stringify(status));
+        } catch (e) {
+            console.error('Error saving ready status:', e);
+        }
+    }
+
+    isOrderReady(orderId) {
+        const status = this.getReadyStatus();
+        return status[orderId] === true;
+    }
+
+    toggleOrderReady(orderId, isReady) {
+        const status = this.getReadyStatus();
+        if (isReady) {
+            status[orderId] = true;
+        } else {
+            delete status[orderId];
+        }
+        this.saveReadyStatus(status);
+
+        // Update the UI
+        const card = document.querySelector(`[data-order-id="${orderId}"]`);
+        if (card) {
+            card.classList.toggle('ready', isReady);
+        }
+
+        // Re-render schedule to update ready counts
+        this.renderSchedule(this.data?.pickupSchedule || []);
+    }
+
+    getReadyCountForSlot(slot) {
+        if (!slot.orders) return 0;
+        return slot.orders.filter(order => this.isOrderReady(order.id)).length;
+    }
+
+    clearExpiredReadyStatus() {
+        // Clear ready status for dates other than today
+        const today = this.getTodayString();
+        try {
+            const keys = Object.keys(localStorage).filter(key =>
+                key.startsWith('bakery_ready_status_') && !key.endsWith(today)
+            );
+            keys.forEach(key => localStorage.removeItem(key));
+        } catch (e) {
+            // Ignore errors
+        }
+    }
+
+    // Print functions
+    printBakeList() {
+        const printContainer = document.getElementById('printContainer');
+        if (!printContainer) return;
+
+        const date = new Date(this.currentDate + 'T12:00:00');
+        const dateStr = date.toLocaleDateString('en-US', {
+            weekday: 'long',
+            month: 'long',
+            day: 'numeric',
+            year: 'numeric'
+        });
+        const now = new Date();
+        const generatedTime = now.toLocaleTimeString('en-US', {
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true
+        });
+
+        const bakeList = this.data?.bakeList || {};
+        const totals = this.data?.totals || {};
+        const schedule = this.data?.pickupSchedule || [];
+
+        printContainer.innerHTML = `
+            <div class="print-page print-bake-list">
+                <div class="print-header">
+                    <h1>PARK AVENUE BAKERY</h1>
+                    <h2>BAKE LIST</h2>
+                    <p>${dateStr}</p>
+                    <p class="generated-time">Generated: ${generatedTime}</p>
+                </div>
+
+                <div class="print-section">
+                    <h3>BREADS</h3>
+                    ${this.renderPrintBakeCategory(bakeList.breads || [])}
+                </div>
+
+                <div class="print-section">
+                    <h3>BARS</h3>
+                    ${this.renderPrintBakeCategory(bakeList.bars || [])}
+                </div>
+
+                <div class="print-section">
+                    <h3>COOKIES</h3>
+                    ${this.renderPrintBakeCategory(bakeList.cookies || [])}
+                </div>
+
+                <div class="print-totals">
+                    <p><strong>Total Orders:</strong> ${totals.orders || 0}</p>
+                    <p><strong>Total Items:</strong> ${totals.items || 0}</p>
+                    <p>Breads: ${totals.breads || 0} | Bars: ${totals.bars || 0} | Cookies: ${totals.cookies || 0}</p>
+                </div>
+
+                <div class="page-break"></div>
+
+                <div class="print-header">
+                    <h1>PARK AVENUE BAKERY</h1>
+                    <h2>PICKUP SCHEDULE OVERVIEW</h2>
+                    <p>${dateStr}</p>
+                </div>
+
+                <div class="print-schedule-overview">
+                    ${schedule.map(slot => `
+                        <div class="print-schedule-slot">
+                            <span class="slot-time">${slot.displayTime}</span>
+                            <span class="slot-count">${slot.orderCount} order${slot.orderCount !== 1 ? 's' : ''}</span>
+                            <span class="slot-items">${slot.itemCount} items</span>
+                        </div>
+                    `).join('') || '<p>No pickups scheduled</p>'}
+                </div>
+            </div>
+        `;
+
+        printContainer.classList.add('printing');
+        window.print();
+        setTimeout(() => {
+            printContainer.classList.remove('printing');
+            printContainer.innerHTML = '';
+        }, 1000);
+    }
+
+    renderPrintBakeCategory(items) {
+        if (!items || items.length === 0) {
+            return '<p class="empty">No orders</p>';
+        }
+        return `
+            <ul class="print-bake-items">
+                ${items.map(item => `
+                    <li>
+                        <span class="print-checkbox">☐</span>
+                        <span class="item-name">${this.escapeHtml(item.name)}</span>
+                        <span class="item-dots"></span>
+                        <span class="item-qty">${item.quantity}</span>
+                    </li>
+                `).join('')}
+            </ul>
+        `;
+    }
+
+    printSlot(time) {
+        const slot = this.data?.pickupSchedule?.find(s => s.time === time);
+        if (!slot) return;
+
+        this.printPickupSheets([slot]);
+    }
+
+    printAllPickupSheets() {
+        const schedule = this.data?.pickupSchedule || [];
+        if (schedule.length === 0) {
+            this.showError('No pickup slots to print.');
+            return;
+        }
+        this.printPickupSheets(schedule);
+    }
+
+    printPickupSheets(slots) {
+        const printContainer = document.getElementById('printContainer');
+        if (!printContainer) return;
+
+        const date = new Date(this.currentDate + 'T12:00:00');
+        const dateStr = date.toLocaleDateString('en-US', {
+            weekday: 'long',
+            month: 'long',
+            day: 'numeric',
+            year: 'numeric'
+        });
+        const now = new Date();
+        const generatedTime = now.toLocaleTimeString('en-US', {
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true
+        });
+
+        printContainer.innerHTML = slots.map((slot, index) => `
+            <div class="print-page print-pickup-sheet ${index > 0 ? 'page-break-before' : ''}">
+                <div class="print-header">
+                    <h1>PARK AVENUE BAKERY</h1>
+                    <h2>PICKUP SHEET: ${slot.displayTime}</h2>
+                    <p>${dateStr}</p>
+                    <p class="generated-time">Generated: ${generatedTime}</p>
+                </div>
+
+                <div class="print-orders">
+                    ${slot.orders.map(order => `
+                        <div class="print-order">
+                            <div class="print-order-header">
+                                <span class="order-number">ORDER #${this.escapeHtml(order.orderNumber)}</span>
+                            </div>
+                            <div class="print-order-customer">
+                                <p><strong>Customer:</strong> ${this.escapeHtml(order.customerName)}</p>
+                                ${order.customerPhone ? `<p><strong>Phone:</strong> ${this.escapeHtml(order.customerPhone)}</p>` : ''}
+                            </div>
+                            <ul class="print-order-items">
+                                ${order.items.map(item => `
+                                    <li>
+                                        <span class="print-checkbox">☐</span>
+                                        <span class="item-qty">${item.quantity}x</span>
+                                        <span class="item-name">${this.escapeHtml(item.name)}</span>
+                                    </li>
+                                `).join('')}
+                            </ul>
+                        </div>
+                    `).join('')}
+                </div>
+
+                <div class="print-slot-total">
+                    <strong>TOTAL:</strong> ${slot.orderCount} order${slot.orderCount !== 1 ? 's' : ''}, ${slot.itemCount} items
+                </div>
             </div>
         `).join('');
+
+        printContainer.classList.add('printing');
+        window.print();
+        setTimeout(() => {
+            printContainer.classList.remove('printing');
+            printContainer.innerHTML = '';
+        }, 1000);
     }
 
     renderTotals(totals) {
@@ -289,7 +620,8 @@ class PrepDashboard {
         } else {
             modalBody.innerHTML = alerts.map(order => `
                 <div class="modal-order-item">
-                    <strong>Order #${this.escapeHtml(order.id)}</strong><br>
+                    <strong>Order #${this.escapeHtml(order.orderNumber || order.id)}</strong><br>
+                    ${order.customerName ? `Customer: ${this.escapeHtml(order.customerName)}<br>` : ''}
                     Pickup: ${this.escapeHtml(order.time)}<br>
                     Items: ${order.items}
                 </div>
@@ -349,6 +681,8 @@ class PrepDashboard {
 }
 
 // Initialize dashboard when page loads
+let dashboard;
 document.addEventListener('DOMContentLoaded', () => {
-    new PrepDashboard();
+    dashboard = new PrepDashboard();
+    window.dashboard = dashboard; // Make accessible for onclick handlers
 });
