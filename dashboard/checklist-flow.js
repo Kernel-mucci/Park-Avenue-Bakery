@@ -91,10 +91,11 @@ class ChecklistFlow {
             }
 
             if (!response.ok) {
-                throw new Error('Failed to load checklist');
+                throw new Error(`Failed to load checklist: ${response.status}`);
             }
 
             const data = await response.json();
+
             this.template = data.template;
             this.completion = data.completion;
 

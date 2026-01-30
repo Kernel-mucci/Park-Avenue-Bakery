@@ -1,5 +1,5 @@
-// api/prep-dashboard/checklists/[...path].js
-// Checklist API catch-all handler for Park Avenue Bakery
+// api/prep-dashboard/checklists/[[...path]].js
+// Checklist API - handles all checklist routes for Park Avenue Bakery
 
 import crypto from 'crypto';
 
@@ -338,13 +338,77 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
   if (req.method === 'OPTIONS') return res.status(200).end();
-  if (!isAuthenticated(req)) return res.status(401).json({ error: 'Not authenticated' });
 
-  const { method, query } = req;
-  const pathParts = (query.path || []).filter(Boolean);
+  if (!isAuthenticated(req)) {
+    console.log('Auth failed. Cookie header:', req.headers.cookie);
+    return res.status(401).json({ error: 'Not authenticated' });
+  }
 
-  // GET template by ID: /api/prep-dashboard/checklists/baker-opening
-  if (method === 'GET' && pathParts.length === 1 && pathParts[0] !== 'history') {
+  try {
+    const { method, query } = req;
+    const pathParts = (query.path || []).filter(Boolean);
+
+    // Log request details for debugging
+    console.log('Checklist API request:', { method, pathParts, url: req.url });
+
+    // GET /api/prep-dashboard/checklists - List all checklists for today
+    if (method === 'GET' && pathParts.length === 0) {
+      const date = query.date || getTodayString();
+      const todayCompletions = getAllCompletionsForDate(date);
+
+      const checklists = Object.values(CHECKLIST_TEMPLATES).map(template => {
+        const completion = todayCompletions.find(c => c.templateId === template.id);
+        const totalItems = countTotalItems(template);
+
+        if (completion && completion.completedAt) {
+          return {
+            templateId: template.id,
+            name: template.name,
+            scheduledTime: template.scheduledTime,
+            scheduledTimeDisplay: formatTime12Hour(template.scheduledTime),
+            status: 'complete',
+            completedAt: completion.completedAt,
+            completedBy: completion.completedBy,
+            alerts: (completion.alerts || []).length,
+            progress: totalItems,
+            total: totalItems
+          };
+        } else if (completion) {
+          return {
+            templateId: template.id,
+            name: template.name,
+            scheduledTime: template.scheduledTime,
+            scheduledTimeDisplay: formatTime12Hour(template.scheduledTime),
+            status: 'in-progress',
+            startedAt: completion.startedAt,
+            startedBy: completion.completedBy,
+            progress: countCompletedItems(completion),
+            total: totalItems
+          };
+        } else {
+          return {
+            templateId: template.id,
+            name: template.name,
+            scheduledTime: template.scheduledTime,
+            scheduledTimeDisplay: formatTime12Hour(template.scheduledTime),
+            status: 'not-started',
+            progress: 0,
+            total: totalItems
+          };
+        }
+      });
+
+      // Sort by scheduled time
+      checklists.sort((a, b) => a.scheduledTime.localeCompare(b.scheduledTime));
+
+      return res.status(200).json({
+        date,
+        checklists
+      });
+    }
+
+    // GET template by ID: /api/prep-dashboard/checklists/baker-opening
+    if (method === 'GET' && pathParts.length === 1 && pathParts[0] !== 'history') {
     const templateId = pathParts[0];
     const template = CHECKLIST_TEMPLATES[templateId];
     if (!template) return res.status(404).json({ error: 'Checklist not found' });
@@ -469,4 +533,9 @@ export default async function handler(req, res) {
   }
 
   return res.status(405).json({ error: 'Method not allowed' });
+
+  } catch (error) {
+    console.error('Checklist API error:', error);
+    return res.status(500).json({ error: 'Internal server error', message: error.message });
+  }
 }
