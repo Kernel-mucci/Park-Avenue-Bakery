@@ -355,9 +355,12 @@ function formatTime12Hour(time24) {
 // API HANDLER
 // ============================================
 
+// This file ONLY handles GET /api/prep-dashboard/checklists (list all checklists)
+// All other routes (templates, responses, etc.) are handled by [...path].js
+
 export default async function handler(req, res) {
   // CORS headers
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
   if (req.method === 'OPTIONS') {
@@ -369,285 +372,62 @@ export default async function handler(req, res) {
     return res.status(401).json({ error: 'Not authenticated' });
   }
 
-  const { method, query } = req;
-  const pathParts = (query.path || []).filter(Boolean);
-
-  // GET /api/prep-dashboard/checklists - List today's checklists
-  if (method === 'GET' && pathParts.length === 0) {
-    const date = query.date || getTodayString();
-    const todayCompletions = getAllCompletionsForDate(date);
-
-    const checklists = Object.values(CHECKLIST_TEMPLATES).map(template => {
-      const completion = todayCompletions.find(c => c.templateId === template.id);
-      const totalItems = countTotalItems(template);
-
-      if (completion && completion.completedAt) {
-        return {
-          templateId: template.id,
-          name: template.name,
-          scheduledTime: template.scheduledTime,
-          scheduledTimeDisplay: formatTime12Hour(template.scheduledTime),
-          status: 'complete',
-          completedAt: completion.completedAt,
-          completedBy: completion.completedBy,
-          alerts: (completion.alerts || []).length,
-          progress: totalItems,
-          total: totalItems
-        };
-      } else if (completion) {
-        return {
-          templateId: template.id,
-          name: template.name,
-          scheduledTime: template.scheduledTime,
-          scheduledTimeDisplay: formatTime12Hour(template.scheduledTime),
-          status: 'in-progress',
-          startedAt: completion.startedAt,
-          startedBy: completion.completedBy,
-          progress: countCompletedItems(completion),
-          total: totalItems
-        };
-      } else {
-        return {
-          templateId: template.id,
-          name: template.name,
-          scheduledTime: template.scheduledTime,
-          scheduledTimeDisplay: formatTime12Hour(template.scheduledTime),
-          status: 'not-started',
-          progress: 0,
-          total: totalItems
-        };
-      }
-    });
-
-    // Sort by scheduled time
-    checklists.sort((a, b) => a.scheduledTime.localeCompare(b.scheduledTime));
-
-    return res.status(200).json({
-      date,
-      checklists
-    });
+  // Only handle GET requests for listing checklists
+  if (req.method !== 'GET') {
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  // GET /api/prep-dashboard/checklists/history - Get history
-  if (method === 'GET' && pathParts[0] === 'history') {
-    const fromDate = query.from || getTodayString();
-    const toDate = query.to || getTodayString();
-    const templateId = query.templateId;
+  const { query } = req;
+  const date = query.date || getTodayString();
+  const todayCompletions = getAllCompletionsForDate(date);
 
-    let history = getCompletionsInRange(fromDate, toDate);
-    if (templateId) {
-      history = history.filter(c => c.templateId === templateId);
-    }
+  const checklists = Object.values(CHECKLIST_TEMPLATES).map(template => {
+    const completion = todayCompletions.find(c => c.templateId === template.id);
+    const totalItems = countTotalItems(template);
 
-    return res.status(200).json({
-      from: fromDate,
-      to: toDate,
-      completions: history.map(c => ({
-        id: c.id,
-        templateId: c.templateId,
-        templateName: CHECKLIST_TEMPLATES[c.templateId]?.name || c.templateId,
-        date: c.date,
-        startedAt: c.startedAt,
-        completedAt: c.completedAt,
-        completedBy: c.completedBy,
-        progress: countCompletedItems(c),
-        total: countTotalItems(CHECKLIST_TEMPLATES[c.templateId]),
-        alerts: (c.alerts || []).length
-      }))
-    });
-  }
-
-  // GET /api/prep-dashboard/checklists/[templateId] - Get specific template + today's progress
-  if (method === 'GET' && pathParts.length === 1) {
-    const templateId = pathParts[0];
-    const template = CHECKLIST_TEMPLATES[templateId];
-
-    if (!template) {
-      return res.status(404).json({ error: 'Checklist template not found' });
-    }
-
-    const date = query.date || getTodayString();
-    const completion = getCompletion(templateId, date);
-
-    return res.status(200).json({
-      template,
-      date,
-      completion: completion || null,
-      progress: completion ? countCompletedItems(completion) : 0,
-      total: countTotalItems(template)
-    });
-  }
-
-  // POST /api/prep-dashboard/checklists/[templateId]/response - Save item response
-  if (method === 'POST' && pathParts.length === 2 && pathParts[1] === 'response') {
-    const templateId = pathParts[0];
-    const template = CHECKLIST_TEMPLATES[templateId];
-
-    if (!template) {
-      return res.status(404).json({ error: 'Checklist template not found' });
-    }
-
-    const { itemId, value, completedBy, date: requestDate } = req.body;
-    const date = requestDate || getTodayString();
-
-    if (!itemId || value === undefined) {
-      return res.status(400).json({ error: 'itemId and value are required' });
-    }
-
-    // Get or create completion record
-    let completion = getCompletion(templateId, date);
-    const now = new Date().toISOString();
-
-    if (!completion) {
-      completion = {
-        id: generateId(),
-        templateId,
-        date,
-        startedAt: now,
-        completedAt: null,
-        completedBy: completedBy || 'Staff',
-        responses: {},
-        alerts: []
-      };
-    }
-
-    // Save the response
-    completion.responses[itemId] = {
-      value,
-      timestamp: now
-    };
-
-    // Update completedBy if provided
-    if (completedBy) {
-      completion.completedBy = completedBy;
-    }
-
-    // Check for alerts
-    completion.alerts = checkAlerts(template, completion.responses);
-
-    // Check if item triggered an alert
-    let itemAlert = null;
-    const itemConfig = template.sections
-      .flatMap(s => s.items)
-      .find(i => i.id === itemId);
-
-    if (itemConfig && itemConfig.alertIf && typeof value === 'number') {
-      if (itemConfig.alertIf.above !== undefined && value > itemConfig.alertIf.above) {
-        itemAlert = {
-          type: 'warning',
-          message: `Value exceeds ${itemConfig.alertIf.above}${itemConfig.unit || ''} limit!`
-        };
-      }
-      if (itemConfig.alertIf.below !== undefined && value < itemConfig.alertIf.below) {
-        itemAlert = {
-          type: 'warning',
-          message: `Value is below ${itemConfig.alertIf.below}${itemConfig.unit || ''} minimum!`
-        };
-      }
-    }
-
-    saveCompletion(completion);
-
-    return res.status(200).json({
-      success: true,
-      progress: countCompletedItems(completion),
-      total: countTotalItems(template),
-      alert: itemAlert
-    });
-  }
-
-  // POST /api/prep-dashboard/checklists/[templateId]/complete - Mark complete
-  if (method === 'POST' && pathParts.length === 2 && pathParts[1] === 'complete') {
-    const templateId = pathParts[0];
-    const template = CHECKLIST_TEMPLATES[templateId];
-
-    if (!template) {
-      return res.status(404).json({ error: 'Checklist template not found' });
-    }
-
-    const { completedBy, date: requestDate } = req.body;
-    const date = requestDate || getTodayString();
-    const completion = getCompletion(templateId, date);
-
-    if (!completion) {
-      return res.status(400).json({ error: 'No checklist in progress for this date' });
-    }
-
-    // Check if all required items are complete
-    const requiredItems = template.sections
-      .flatMap(s => s.items)
-      .filter(i => i.required);
-
-    const missingItems = requiredItems.filter(item => !completion.responses[item.id]);
-
-    if (missingItems.length > 0) {
-      return res.status(400).json({
-        error: 'Not all required items are complete',
-        missingItems: missingItems.map(i => ({ id: i.id, label: i.label }))
-      });
-    }
-
-    // Mark as complete
-    completion.completedAt = new Date().toISOString();
-    if (completedBy) {
-      completion.completedBy = completedBy;
-    }
-
-    saveCompletion(completion);
-
-    return res.status(200).json({
-      success: true,
-      completion: {
-        id: completion.id,
-        templateId: completion.templateId,
-        date: completion.date,
+    if (completion && completion.completedAt) {
+      return {
+        templateId: template.id,
+        name: template.name,
+        scheduledTime: template.scheduledTime,
+        scheduledTimeDisplay: formatTime12Hour(template.scheduledTime),
+        status: 'complete',
         completedAt: completion.completedAt,
         completedBy: completion.completedBy,
-        alerts: completion.alerts
-      }
-    });
-  }
-
-  // POST /api/prep-dashboard/checklists/[templateId]/photo - Upload photo
-  if (method === 'POST' && pathParts.length === 2 && pathParts[1] === 'photo') {
-    // For MVP, we'll just acknowledge the photo and return a mock URL
-    // In production, this would upload to Supabase Storage or Vercel Blob
-    const { itemId, photoData } = req.body;
-
-    if (!itemId || !photoData) {
-      return res.status(400).json({ error: 'itemId and photoData are required' });
+        alerts: (completion.alerts || []).length,
+        progress: totalItems,
+        total: totalItems
+      };
+    } else if (completion) {
+      return {
+        templateId: template.id,
+        name: template.name,
+        scheduledTime: template.scheduledTime,
+        scheduledTimeDisplay: formatTime12Hour(template.scheduledTime),
+        status: 'in-progress',
+        startedAt: completion.startedAt,
+        startedBy: completion.completedBy,
+        progress: countCompletedItems(completion),
+        total: totalItems
+      };
+    } else {
+      return {
+        templateId: template.id,
+        name: template.name,
+        scheduledTime: template.scheduledTime,
+        scheduledTimeDisplay: formatTime12Hour(template.scheduledTime),
+        status: 'not-started',
+        progress: 0,
+        total: totalItems
+      };
     }
+  });
 
-    // Generate a mock URL (in production, upload to storage)
-    const photoUrl = `https://storage.example.com/checklists/${Date.now()}-${itemId}.jpg`;
+  // Sort by scheduled time
+  checklists.sort((a, b) => a.scheduledTime.localeCompare(b.scheduledTime));
 
-    return res.status(200).json({
-      success: true,
-      url: photoUrl,
-      message: 'Photo uploaded (MVP: mock storage)'
-    });
-  }
-
-  // GET /api/prep-dashboard/checklists/[templateId]/[completionId] - Get specific completion
-  if (method === 'GET' && pathParts.length === 2) {
-    const templateId = pathParts[0];
-    const completionId = pathParts[1];
-
-    // Find the completion by ID
-    for (const [key, completion] of completions) {
-      if (completion.id === completionId && completion.templateId === templateId) {
-        return res.status(200).json({
-          template: CHECKLIST_TEMPLATES[templateId],
-          completion
-        });
-      }
-    }
-
-    return res.status(404).json({ error: 'Completion not found' });
-  }
-
-  return res.status(405).json({ error: 'Method not allowed' });
+  return res.status(200).json({
+    date,
+    checklists
+  });
 }
-
-// Export templates for testing
-export { CHECKLIST_TEMPLATES };
