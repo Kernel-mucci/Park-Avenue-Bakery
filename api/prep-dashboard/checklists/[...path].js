@@ -346,10 +346,16 @@ export default async function handler(req, res) {
 
   try {
     const { method, query } = req;
-    const pathParts = (query.path || []).filter(Boolean);
+
+    // Parse path from URL directly (more reliable than query.path)
+    const url = new URL(req.url, `https://${req.headers.host}`);
+    const fullPath = url.pathname;
+    const basePath = '/api/prep-dashboard/checklists/';
+    const subPath = fullPath.startsWith(basePath) ? fullPath.slice(basePath.length) : '';
+    const pathParts = subPath.split('/').filter(Boolean);
 
     // Log request details for debugging
-    console.log('Checklist API request:', { method, pathParts, url: req.url });
+    console.log('Checklist API request:', { method, pathParts, url: req.url, fullPath });
 
     // GET template by ID: /api/prep-dashboard/checklists/baker-opening
     if (method === 'GET' && pathParts.length === 1 && pathParts[0] !== 'history') {
