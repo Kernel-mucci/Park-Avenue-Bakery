@@ -1117,3 +1117,879 @@ body {
         page-break-inside: avoid;
     }
 }
+
+/* ============================================
+   CHECKLISTS HUB PAGE
+   ============================================ */
+
+.checklists-main {
+    padding: 1rem 0;
+}
+
+.checklists-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.checklist-card {
+    display: block;
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    text-decoration: none;
+    color: inherit;
+    box-shadow: 0 2px 10px rgba(74, 52, 34, 0.1);
+    border-left: 4px solid var(--sage);
+    transition: all 0.2s ease;
+}
+
+.checklist-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(74, 52, 34, 0.15);
+}
+
+.checklist-card.status-complete {
+    border-left-color: var(--success-green);
+    background: linear-gradient(135deg, #f0fdf4 0%, white 100%);
+}
+
+.checklist-card.status-in-progress {
+    border-left-color: var(--alert-yellow);
+    background: linear-gradient(135deg, #fffbeb 0%, white 100%);
+}
+
+.checklist-card.status-not-started {
+    border-left-color: var(--sage);
+}
+
+.checklist-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+}
+
+.checklist-time {
+    font-size: 0.9rem;
+    color: var(--warm-brown);
+    font-weight: 600;
+}
+
+.checklist-status-icon {
+    font-size: 1.5rem;
+}
+
+.status-complete .checklist-status-icon {
+    color: var(--success-green);
+}
+
+.status-in-progress .checklist-status-icon {
+    color: var(--alert-yellow);
+}
+
+.status-not-started .checklist-status-icon {
+    color: var(--sage);
+}
+
+.checklist-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: var(--deep-brown);
+    margin-bottom: 1rem;
+}
+
+.checklist-progress {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 0.75rem;
+}
+
+.progress-bar {
+    flex: 1;
+    height: 8px;
+    background: var(--butter);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: var(--terracotta);
+    border-radius: 4px;
+    transition: width 0.3s ease;
+}
+
+.status-complete .progress-fill {
+    background: var(--success-green);
+}
+
+.progress-text {
+    font-size: 0.9rem;
+    color: var(--warm-brown);
+    min-width: 50px;
+    text-align: right;
+}
+
+.checklist-meta {
+    font-size: 0.85rem;
+    color: var(--warm-brown);
+}
+
+.meta-complete {
+    color: var(--success-green);
+}
+
+.meta-progress {
+    color: #856404;
+}
+
+.checklist-alerts {
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px dashed var(--butter);
+}
+
+.alert-badge {
+    display: inline-block;
+    background: #fee2e2;
+    color: var(--alert-red);
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.back-link {
+    color: var(--warm-brown);
+    text-decoration: none;
+    font-size: 1.25rem;
+    padding: 0.5rem;
+    display: flex;
+    align-items: center;
+}
+
+.back-link:hover {
+    color: var(--terracotta);
+}
+
+.footer-links {
+    display: flex;
+    gap: 0.5rem;
+}
+
+/* ============================================
+   CHECKLIST COMPLETION FLOW PAGE
+   ============================================ */
+
+.checklist-container {
+    max-width: 800px;
+    padding-bottom: 100px; /* Space for fixed footer */
+}
+
+.checklist-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: white;
+    padding: 1rem 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(74, 52, 34, 0.1);
+    margin-bottom: 0;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.checklist-header .header-center {
+    text-align: center;
+}
+
+.checklist-header h1 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--deep-brown);
+    margin: 0;
+}
+
+.progress-counter {
+    font-size: 0.9rem;
+    color: var(--warm-brown);
+}
+
+.checklist-progress-bar {
+    height: 6px;
+    background: var(--butter);
+    margin-bottom: 1rem;
+}
+
+.checklist-progress-bar .progress-fill {
+    height: 100%;
+    background: var(--terracotta);
+    transition: width 0.3s ease;
+}
+
+/* Section Navigation */
+.section-nav {
+    display: flex;
+    gap: 0.5rem;
+    padding: 0.75rem;
+    background: white;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.section-nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0.5rem 1rem;
+    background: var(--cream);
+    border: 2px solid transparent;
+    border-radius: 8px;
+    cursor: pointer;
+    min-width: 80px;
+    transition: all 0.2s ease;
+}
+
+.section-nav-item:hover {
+    background: var(--butter);
+}
+
+.section-nav-item.current {
+    border-color: var(--terracotta);
+    background: white;
+}
+
+.section-nav-item.complete {
+    background: #e8f5e9;
+}
+
+.section-nav-item.complete .nav-number {
+    background: var(--success-green);
+    color: white;
+}
+
+.nav-number {
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--sage);
+    color: white;
+    border-radius: 50%;
+    font-weight: 600;
+    font-size: 0.9rem;
+    margin-bottom: 0.25rem;
+}
+
+.nav-title {
+    font-size: 0.75rem;
+    color: var(--deep-brown);
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 80px;
+}
+
+.nav-status {
+    font-size: 0.7rem;
+    color: var(--warm-brown);
+}
+
+/* Section Content */
+.checklist-main {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(74, 52, 34, 0.1);
+    overflow: hidden;
+}
+
+.section-title-bar {
+    background: var(--butter);
+    padding: 1rem 1.5rem;
+    border-bottom: 2px solid var(--terracotta);
+}
+
+.section-title-bar h2 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--deep-brown);
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.items-container {
+    padding: 1rem;
+}
+
+/* Checklist Items - Large Touch Targets */
+.checklist-item {
+    margin-bottom: 0.75rem;
+}
+
+.checkbox-item {
+    display: flex;
+    align-items: center;
+    min-height: 64px;
+    padding: 1rem 1.25rem;
+    background: var(--cream);
+    border: 2px solid transparent;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.checkbox-item:hover {
+    background: var(--butter);
+}
+
+.checkbox-item.checked {
+    background: #e8f5e9;
+    border-color: var(--success-green);
+}
+
+.checkbox-item input[type="checkbox"] {
+    width: 28px;
+    height: 28px;
+    margin-right: 1rem;
+    cursor: pointer;
+    accent-color: var(--success-green);
+}
+
+.checkbox-label {
+    font-size: 1.1rem;
+    color: var(--deep-brown);
+    flex: 1;
+}
+
+.required-indicator {
+    color: var(--terracotta);
+    font-weight: 600;
+    margin-left: 0.25rem;
+}
+
+/* Input Items */
+.input-item {
+    padding: 1rem 1.25rem;
+    background: var(--cream);
+    border-radius: 10px;
+    margin-bottom: 0.75rem;
+}
+
+.input-item label {
+    display: block;
+    font-size: 1.1rem;
+    color: var(--deep-brown);
+    margin-bottom: 0.75rem;
+    font-weight: 500;
+}
+
+.input-item input[type="text"],
+.input-item input[type="number"],
+.input-item select {
+    width: 100%;
+    min-height: 56px;
+    padding: 0 1rem;
+    font-size: 1.1rem;
+    font-family: inherit;
+    border: 2px solid var(--sage);
+    border-radius: 8px;
+    background: white;
+    color: var(--deep-brown);
+    transition: border-color 0.2s ease;
+}
+
+.input-item input:focus,
+.input-item select:focus {
+    outline: none;
+    border-color: var(--terracotta);
+}
+
+.number-input-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.number-input-wrapper input {
+    flex: 1;
+}
+
+.number-input-wrapper .unit {
+    font-size: 1.1rem;
+    color: var(--warm-brown);
+    font-weight: 600;
+    min-width: 40px;
+}
+
+.input-item.has-alert {
+    border: 2px solid var(--alert-yellow);
+}
+
+.input-alert {
+    margin-top: 0.75rem;
+    padding: 0.5rem 0.75rem;
+    background: #fff3cd;
+    border-radius: 6px;
+    color: #856404;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+/* Photo Input */
+.photo-item .photo-input-wrapper {
+    margin-top: 0.5rem;
+}
+
+.photo-capture-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 120px;
+    background: white;
+    border: 2px dashed var(--sage);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.photo-capture-btn:hover {
+    border-color: var(--terracotta);
+    background: var(--butter);
+}
+
+.capture-icon {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.photo-capture-btn span:last-child {
+    font-size: 1rem;
+    color: var(--warm-brown);
+}
+
+.photo-preview {
+    position: relative;
+}
+
+.photo-preview img {
+    width: 100%;
+    max-height: 200px;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+.btn-remove-photo {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    border: none;
+    padding: 0.5rem 0.75rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85rem;
+}
+
+/* Checklist Footer */
+.checklist-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.5rem;
+    background: white;
+    box-shadow: 0 -2px 10px rgba(74, 52, 34, 0.1);
+    z-index: 100;
+}
+
+.btn-large {
+    min-height: 56px;
+    padding: 0 2rem;
+    font-size: 1.1rem;
+}
+
+.btn-primary {
+    background: var(--terracotta);
+    color: white;
+}
+
+.btn-primary:hover {
+    background: var(--deep-brown);
+}
+
+.btn-secondary {
+    background: var(--cream);
+    color: var(--warm-brown);
+    border: 1px solid var(--sage);
+}
+
+.btn-secondary:hover {
+    background: var(--butter);
+}
+
+.section-indicator {
+    font-size: 0.9rem;
+    color: var(--warm-brown);
+}
+
+/* Complete Modal */
+.modal-completion {
+    max-width: 450px;
+}
+
+.modal-completion .modal-body {
+    text-align: left;
+}
+
+.modal-completion p {
+    margin-bottom: 1rem;
+    font-size: 1rem;
+    color: var(--deep-brown);
+}
+
+.missing-items-list {
+    margin: 0.5rem 0 1rem 1.5rem;
+    color: var(--alert-red);
+}
+
+.missing-items-list li {
+    margin: 0.25rem 0;
+}
+
+.alerts-summary {
+    margin-bottom: 1rem;
+}
+
+.alerts-warning {
+    background: #fff3cd;
+    border: 1px solid var(--alert-yellow);
+    border-radius: 8px;
+    padding: 1rem;
+    color: #856404;
+}
+
+.alerts-warning ul {
+    margin: 0.5rem 0 0 1.5rem;
+}
+
+.completion-name {
+    margin-top: 1rem;
+}
+
+.completion-name label {
+    display: block;
+    font-size: 0.9rem;
+    color: var(--warm-brown);
+    margin-bottom: 0.5rem;
+}
+
+.completion-name input {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+    font-family: inherit;
+    border: 2px solid var(--sage);
+    border-radius: 8px;
+}
+
+.completion-name input:focus {
+    outline: none;
+    border-color: var(--terracotta);
+}
+
+.modal-footer {
+    display: flex;
+    gap: 1rem;
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--butter);
+}
+
+.modal-footer .btn {
+    flex: 1;
+    min-height: 48px;
+}
+
+/* Alert Toast */
+.alert-toast {
+    position: fixed;
+    bottom: 100px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    background: #fff3cd;
+    border: 2px solid var(--alert-yellow);
+    padding: 1rem 1.5rem;
+    border-radius: 10px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    z-index: 1000;
+    animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+}
+
+.alert-toast .alert-icon {
+    font-size: 1.5rem;
+    color: #856404;
+}
+
+.alert-toast .alert-message {
+    font-size: 1rem;
+    color: #856404;
+    font-weight: 500;
+}
+
+/* ============================================
+   CHECKLIST RESPONSIVE STYLES
+   ============================================ */
+
+@media (max-width: 768px) {
+    .checklists-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .checklist-header {
+        flex-wrap: wrap;
+        gap: 0.75rem;
+    }
+
+    .checklist-header .header-center {
+        order: -1;
+        flex: 100%;
+    }
+
+    .section-nav {
+        padding: 0.5rem;
+    }
+
+    .section-nav-item {
+        min-width: 70px;
+        padding: 0.5rem 0.75rem;
+    }
+
+    .nav-title {
+        max-width: 60px;
+        font-size: 0.7rem;
+    }
+
+    .checkbox-item {
+        min-height: 56px;
+        padding: 0.75rem 1rem;
+    }
+
+    .checkbox-label {
+        font-size: 1rem;
+    }
+
+    .input-item input[type="text"],
+    .input-item input[type="number"],
+    .input-item select {
+        min-height: 52px;
+    }
+
+    .checklist-footer {
+        padding: 0.75rem 1rem;
+    }
+
+    .btn-large {
+        min-height: 48px;
+        padding: 0 1.25rem;
+        font-size: 1rem;
+    }
+
+    .section-indicator {
+        display: none;
+    }
+
+    .alert-toast {
+        left: 1rem;
+        right: 1rem;
+        transform: none;
+        bottom: 80px;
+    }
+
+    @keyframes slideUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+}
+
+/* ============================================
+   HISTORY PAGE STYLES
+   ============================================ */
+
+.history-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: flex-end;
+    background: white;
+    padding: 1.25rem;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(74, 52, 34, 0.1);
+    margin-bottom: 1rem;
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.filter-group label {
+    font-size: 0.85rem;
+    color: var(--warm-brown);
+    font-weight: 500;
+}
+
+.filter-group input,
+.filter-group select {
+    padding: 0.5rem 0.75rem;
+    font-size: 1rem;
+    font-family: inherit;
+    border: 2px solid var(--sage);
+    border-radius: 6px;
+    background: white;
+    min-height: 42px;
+}
+
+.filter-group input:focus,
+.filter-group select:focus {
+    outline: none;
+    border-color: var(--terracotta);
+}
+
+.history-main {
+    padding: 1rem 0;
+}
+
+.history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.history-date-group {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(74, 52, 34, 0.1);
+    overflow: hidden;
+}
+
+.history-date {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--deep-brown);
+    background: var(--butter);
+    padding: 1rem 1.25rem;
+    margin: 0;
+    border-bottom: 2px solid var(--terracotta);
+}
+
+.history-items {
+    padding: 0.75rem;
+}
+
+.history-item {
+    padding: 1rem;
+    background: var(--cream);
+    border-radius: 8px;
+    border-left: 4px solid var(--sage);
+    margin-bottom: 0.5rem;
+}
+
+.history-item:last-child {
+    margin-bottom: 0;
+}
+
+.history-item.complete {
+    border-left-color: var(--success-green);
+}
+
+.history-item.in-progress {
+    border-left-color: var(--alert-yellow);
+}
+
+.history-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.history-item-name {
+    font-weight: 600;
+    color: var(--deep-brown);
+    font-size: 1.05rem;
+}
+
+.history-item-time {
+    font-size: 0.9rem;
+    color: var(--warm-brown);
+}
+
+.history-item-meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.85rem;
+    color: var(--warm-brown);
+}
+
+.history-item-alerts {
+    margin-top: 0.5rem;
+    padding: 0.4rem 0.75rem;
+    background: #fff3cd;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    color: #856404;
+    display: inline-block;
+}
+
+@media (max-width: 768px) {
+    .history-filters {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .filter-group {
+        width: 100%;
+    }
+
+    .filter-group input,
+    .filter-group select {
+        width: 100%;
+    }
+}

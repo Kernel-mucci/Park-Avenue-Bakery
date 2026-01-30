@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checklists | Park Avenue Bakery</title>
+    <meta name="robots" content="noindex, nofollow">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600;700&family=Questrial&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="dashboard.css">
+</head>
+<body class="dashboard-page">
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="loading-spinner"></div>
+        <p>Loading checklists...</p>
+    </div>
+
+    <!-- Main Content -->
+    <div id="dashboardContent" class="dashboard-container" style="display: none;">
+        <!-- Header -->
+        <header class="dashboard-header">
+            <div class="header-left">
+                <a href="index.html" class="back-link" title="Back to Dashboard">&#8592;</a>
+                <span class="header-icon">&#9745;</span>
+                <h1>Daily Checklists</h1>
+            </div>
+            <div class="header-center">
+                <span id="currentDate" class="current-date"></span>
+                <span id="currentTime" class="current-time"></span>
+            </div>
+            <div class="header-right">
+                <a href="history.html" class="btn btn-icon">History</a>
+                <button id="logoutBtn" class="btn btn-logout" title="Logout">
+                    Logout
+                </button>
+            </div>
+        </header>
+
+        <!-- Checklists Grid -->
+        <main class="checklists-main">
+            <div id="checklistsGrid" class="checklists-grid">
+                <!-- Populated by JavaScript -->
+                <div class="empty-message">Loading checklists...</div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="dashboard-footer">
+            <div class="footer-links">
+                <a href="index.html" class="btn btn-nav">&#8592; Prep Dashboard</a>
+            </div>
+            <div id="lastRefresh" class="last-refresh">
+                Last refreshed: --
+            </div>
+        </footer>
+    </div>
+
+    <script src="checklists.js"></script>
+</body>
+</html>
