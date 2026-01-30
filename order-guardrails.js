@@ -130,16 +130,32 @@ class OrderGuardrails {
         const availableIds = this.getAvailableItemIds();
         let hiddenCount = 0;
 
+        // Get specialty and everyday bread IDs
+        const specialtyBreadIds = this.getSpecialtyBreadIds();
+        const everydayBreadIds = this.getEverydayBreadIds();
+
         menuItems.forEach(item => {
             const addBtn = item.querySelector('.add-to-cart-btn');
             if (!addBtn) return;
 
             const itemId = addBtn.dataset.id;
 
+            // Clean up any previous specialty styling
+            item.classList.remove('specialty-bread');
+            const existingBadge = item.querySelector('.specialty-badge');
+            if (existingBadge) existingBadge.remove();
+            const existingCutoff = item.querySelector('.cutoff-notice');
+            if (existingCutoff) existingCutoff.remove();
+
             if (availableIds.includes(itemId)) {
                 item.style.display = '';
                 item.classList.remove('unavailable');
                 addBtn.disabled = false;
+
+                // Add specialty bread styling if applicable
+                if (specialtyBreadIds.includes(itemId)) {
+                    this.addSpecialtyBreadStyling(item);
+                }
             } else {
                 item.style.display = 'none';
                 item.classList.add('unavailable');
@@ -148,9 +164,141 @@ class OrderGuardrails {
             }
         });
 
+        // Reorder breads and add section headers
+        this.reorderBreadsWithSections(specialtyBreadIds, everydayBreadIds);
+
         // Show info about hidden items
         if (hiddenCount > 0) {
             this.showPickupInfo();
+        }
+    }
+
+    getSpecialtyBreadIds() {
+        if (!this.availableItems || !this.availableItems.breads) return [];
+        return this.availableItems.breads
+            .filter(item => item.category === 'specialty-bread')
+            .map(item => item.id);
+    }
+
+    getEverydayBreadIds() {
+        if (!this.availableItems || !this.availableItems.breads) return [];
+        return this.availableItems.breads
+            .filter(item => item.category === 'everyday-bread')
+            .map(item => item.id);
+    }
+
+    addSpecialtyBreadStyling(menuItem) {
+        menuItem.classList.add('specialty-bread');
+
+        // Add specialty badge at top of card
+        const badge = document.createElement('div');
+        badge.className = 'specialty-badge';
+        badge.innerHTML = '<i class="fas fa-star"></i> TODAY\'S SPECIALTY';
+        menuItem.insertBefore(badge, menuItem.firstChild);
+
+        // Add cutoff notice to footer
+        const footer = menuItem.querySelector('.menu-item-footer');
+        if (footer) {
+            const cutoffNotice = document.createElement('div');
+            cutoffNotice.className = 'cutoff-notice';
+            cutoffNotice.innerHTML = '<i class="fas fa-clock"></i> Order by 5pm day before';
+            footer.parentNode.insertBefore(cutoffNotice, footer.nextSibling);
+        }
+    }
+
+    reorderBreadsWithSections(specialtyBreadIds, everydayBreadIds) {
+        const menuGrid = document.querySelector('.menu-items-grid');
+        if (!menuGrid) return;
+
+        // Remove existing section headers
+        const existingHeaders = menuGrid.querySelectorAll('.bread-section-header');
+        existingHeaders.forEach(header => header.remove());
+
+        // Get all bread menu items (visible ones)
+        const allBreadItems = Array.from(menuGrid.querySelectorAll('.menu-item[data-category="breads"]'))
+            .filter(item => item.style.display !== 'none');
+
+        if (allBreadItems.length === 0) return;
+
+        // Separate specialty and everyday breads
+        const specialtyBreads = [];
+        const everydayBreads = [];
+
+        allBreadItems.forEach(item => {
+            const btn = item.querySelector('.add-to-cart-btn');
+            if (!btn) return;
+            const itemId = btn.dataset.id;
+            if (specialtyBreadIds.includes(itemId)) {
+                specialtyBreads.push(item);
+            } else {
+                everydayBreads.push(item);
+            }
+        });
+
+        // Get pickup date info for section header
+        const dateObj = new Date(this.pickupDate + 'T12:00:00');
+        const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        const dayName = dayNames[dateObj.getDay()];
+
+        // Find the first bread item to insert before
+        const firstBreadItem = menuGrid.querySelector('.menu-item[data-category="breads"]');
+        if (!firstBreadItem) return;
+
+        // Create and insert specialty section header (if specialty breads available)
+        if (specialtyBreads.length > 0) {
+            const specialtyHeader = document.createElement('div');
+            specialtyHeader.className = 'bread-section-header specialty-section-header';
+            specialtyHeader.innerHTML = `
+                <h3><i class="fas fa-sparkles"></i> ${dayName}'s Specialty Breads</h3>
+                <p>Available for ${dayName} pickup only &bull; Order by 5pm the day before</p>
+            `;
+            menuGrid.insertBefore(specialtyHeader, firstBreadItem);
+
+            // Move specialty breads after the header (in correct order)
+            let insertAfter = specialtyHeader;
+            specialtyBreads.forEach(bread => {
+                if (insertAfter.nextSibling) {
+                    menuGrid.insertBefore(bread, insertAfter.nextSibling);
+                } else {
+                    menuGrid.appendChild(bread);
+                }
+                insertAfter = bread;
+            });
+
+            // Create everyday section header
+            const everydayHeader = document.createElement('div');
+            everydayHeader.className = 'bread-section-header everyday-section-header';
+            everydayHeader.innerHTML = `
+                <h3>Everyday Breads</h3>
+                <p>Available daily &bull; Same-day ordering before 10am</p>
+            `;
+
+            // Insert everyday header after last specialty bread
+            if (insertAfter.nextSibling) {
+                menuGrid.insertBefore(everydayHeader, insertAfter.nextSibling);
+            } else {
+                menuGrid.appendChild(everydayHeader);
+            }
+
+            // Move everyday breads after the everyday header (in correct order)
+            insertAfter = everydayHeader;
+            everydayBreads.forEach(bread => {
+                if (insertAfter.nextSibling) {
+                    menuGrid.insertBefore(bread, insertAfter.nextSibling);
+                } else {
+                    menuGrid.appendChild(bread);
+                }
+                insertAfter = bread;
+            });
+        } else {
+            // No specialty breads (Sunday) - just show everyday header
+            const everydayHeader = document.createElement('div');
+            everydayHeader.className = 'bread-section-header everyday-section-header';
+            everydayHeader.innerHTML = `
+                <h3>Everyday Breads</h3>
+                <p>Available daily &bull; Same-day ordering before 10am</p>
+            `;
+            menuGrid.insertBefore(everydayHeader, firstBreadItem);
         }
     }
 
