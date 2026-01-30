@@ -210,10 +210,6 @@ class OrderGuardrails {
         const menuGrid = document.querySelector('.menu-items-grid');
         if (!menuGrid) return;
 
-        // Remove existing section headers
-        const existingHeaders = menuGrid.querySelectorAll('.bread-section-header');
-        existingHeaders.forEach(header => header.remove());
-
         // Get all bread menu items (visible ones)
         const allBreadItems = Array.from(menuGrid.querySelectorAll('.menu-item[data-category="breads"]'))
             .filter(item => item.style.display !== 'none');
@@ -235,71 +231,34 @@ class OrderGuardrails {
             }
         });
 
-        // Get pickup date info for section header
-        const dateObj = new Date(this.pickupDate + 'T12:00:00');
-        const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-        const dayName = dayNames[dateObj.getDay()];
-
-        // Find the first bread item to insert before
+        // Find the first bread item position
         const firstBreadItem = menuGrid.querySelector('.menu-item[data-category="breads"]');
         if (!firstBreadItem) return;
 
-        // Create and insert specialty section header (if specialty breads available)
-        if (specialtyBreads.length > 0) {
-            const specialtyHeader = document.createElement('div');
-            specialtyHeader.className = 'bread-section-header specialty-section-header';
-            specialtyHeader.innerHTML = `
-                <h3><i class="fas fa-sparkles"></i> ${dayName}'s Specialty Breads</h3>
-                <p>Available for ${dayName} pickup only &bull; Order by 5pm the day before</p>
-            `;
-            menuGrid.insertBefore(specialtyHeader, firstBreadItem);
+        // Reorder: specialty breads first, then everyday breads (no headers)
+        let insertAfter = null;
 
-            // Move specialty breads after the header (in correct order)
-            let insertAfter = specialtyHeader;
-            specialtyBreads.forEach(bread => {
-                if (insertAfter.nextSibling) {
-                    menuGrid.insertBefore(bread, insertAfter.nextSibling);
-                } else {
-                    menuGrid.appendChild(bread);
-                }
-                insertAfter = bread;
-            });
-
-            // Create everyday section header
-            const everydayHeader = document.createElement('div');
-            everydayHeader.className = 'bread-section-header everyday-section-header';
-            everydayHeader.innerHTML = `
-                <h3>Everyday Breads</h3>
-                <p>Available daily &bull; Same-day ordering before 10am</p>
-            `;
-
-            // Insert everyday header after last specialty bread
-            if (insertAfter.nextSibling) {
-                menuGrid.insertBefore(everydayHeader, insertAfter.nextSibling);
+        // Move specialty breads to the front
+        specialtyBreads.forEach((bread, index) => {
+            if (index === 0) {
+                menuGrid.insertBefore(bread, firstBreadItem);
+            } else if (insertAfter && insertAfter.nextSibling) {
+                menuGrid.insertBefore(bread, insertAfter.nextSibling);
             } else {
-                menuGrid.appendChild(everydayHeader);
+                menuGrid.appendChild(bread);
             }
+            insertAfter = bread;
+        });
 
-            // Move everyday breads after the everyday header (in correct order)
-            insertAfter = everydayHeader;
-            everydayBreads.forEach(bread => {
-                if (insertAfter.nextSibling) {
-                    menuGrid.insertBefore(bread, insertAfter.nextSibling);
-                } else {
-                    menuGrid.appendChild(bread);
-                }
-                insertAfter = bread;
-            });
-        } else {
-            // No specialty breads (Sunday) - just show everyday header
-            const everydayHeader = document.createElement('div');
-            everydayHeader.className = 'bread-section-header everyday-section-header';
-            everydayHeader.innerHTML = `
-                <h3>Everyday Breads</h3>
-                <p>Available daily &bull; Same-day ordering before 10am</p>
-            `;
-            menuGrid.insertBefore(everydayHeader, firstBreadItem);
-        }
+        // Move everyday breads after specialty breads
+        everydayBreads.forEach(bread => {
+            if (insertAfter && insertAfter.nextSibling) {
+                menuGrid.insertBefore(bread, insertAfter.nextSibling);
+            } else {
+                menuGrid.appendChild(bread);
+            }
+            insertAfter = bread;
+        });
     }
 
     getAvailableItemIds() {

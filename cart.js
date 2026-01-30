@@ -233,16 +233,6 @@ class ShoppingCart {
                 item.style.display = 'none';
             }
         });
-
-        // Show/hide bread section headers based on filter
-        const breadSectionHeaders = document.querySelectorAll('.bread-section-header');
-        breadSectionHeaders.forEach(header => {
-            if (category === 'all' || category === 'breads') {
-                header.style.display = '';
-            } else {
-                header.style.display = 'none';
-            }
-        });
     }
 
     checkout() {
