@@ -1,7 +1,40 @@
 // api/prep-dashboard/checklists/index.js
-// Checklist API for Park Avenue Bakery Prep Dashboard
+// Checklist API - List today's checklists
 
-import { verifySessionToken, parseCookies } from '../auth.js';
+import crypto from 'crypto';
+
+// ============================================
+// AUTH HELPERS
+// ============================================
+
+function generateSessionToken(password) {
+  const secret = process.env.SESSION_SECRET || 'park-avenue-bakery-2026';
+  return crypto.createHmac('sha256', secret).update(password).digest('hex');
+}
+
+function verifySessionToken(token) {
+  const password = process.env.DASHBOARD_PASSWORD;
+  if (!password) return false;
+  return token === generateSessionToken(password);
+}
+
+function parseCookies(cookieHeader) {
+  const cookies = {};
+  if (!cookieHeader) return cookies;
+  cookieHeader.split(';').forEach(cookie => {
+    const parts = cookie.split('=');
+    const key = parts[0].trim();
+    const value = parts.slice(1).join('=').trim();
+    if (key && value) cookies[key] = value;
+  });
+  return cookies;
+}
+
+function isAuthenticated(req) {
+  const cookies = parseCookies(req.headers.cookie);
+  const sessionToken = cookies['dashboard_session'];
+  return sessionToken && verifySessionToken(sessionToken);
+}
 
 // ============================================
 // CHECKLIST TEMPLATES
@@ -316,16 +349,6 @@ function formatTime12Hour(time24) {
   const ampm = hour >= 12 ? 'PM' : 'AM';
   const hour12 = hour % 12 || 12;
   return `${hour12}:${minutes} ${ampm}`;
-}
-
-// ============================================
-// AUTH MIDDLEWARE
-// ============================================
-
-function isAuthenticated(req) {
-  const cookies = parseCookies(req.headers.cookie);
-  const sessionToken = cookies['dashboard_session'];
-  return sessionToken && verifySessionToken(sessionToken);
 }
 
 // ============================================
