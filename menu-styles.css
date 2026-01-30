@@ -101,3 +101,166 @@
         grid-template-columns: 1fr;
     }
 }
+
+/* =============================================
+   SPECIALTY BREAD HIGHLIGHTING
+   ============================================= */
+
+/* Section Headers for Breads */
+.bread-section-header {
+    grid-column: 1 / -1;
+    padding: 1.5rem 0;
+    margin: 1rem 0;
+    border-bottom: 2px solid var(--butter);
+}
+
+.bread-section-header h3 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--deep-brown);
+    margin: 0 0 0.5rem 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.bread-section-header p {
+    font-size: 0.95rem;
+    color: var(--warm-brown);
+    margin: 0;
+}
+
+/* Specialty Section Header */
+.specialty-section-header {
+    background: linear-gradient(135deg, rgba(201, 124, 93, 0.08), rgba(244, 228, 193, 0.3));
+    border-radius: 12px;
+    padding: 1.5rem 2rem;
+    border: none;
+    border-left: 4px solid var(--terracotta);
+}
+
+.specialty-section-header h3 {
+    color: var(--terracotta);
+}
+
+.specialty-section-header h3 i {
+    color: var(--terracotta);
+}
+
+/* Everyday Section Header */
+.everyday-section-header {
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--butter);
+    border-bottom: none;
+}
+
+/* Specialty Bread Card Styling */
+.menu-item.specialty-bread {
+    border: 2px solid var(--terracotta);
+    position: relative;
+    overflow: hidden;
+    border-radius: 12px;
+    padding-top: 3.5rem; /* Make room for badge */
+}
+
+/* Specialty Badge */
+.specialty-badge {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(135deg, var(--terracotta), #D4896B);
+    color: white;
+    text-align: center;
+    padding: 0.6rem 1rem;
+    font-weight: 600;
+    font-size: 0.85rem;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    z-index: 5;
+}
+
+.specialty-badge i {
+    font-size: 0.9rem;
+}
+
+/* Cutoff Notice */
+.cutoff-notice {
+    font-size: 0.85rem;
+    color: var(--warm-brown);
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px dashed var(--butter);
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.cutoff-notice i {
+    color: var(--terracotta);
+    font-size: 0.9rem;
+}
+
+/* Specialty bread card hover effect */
+.menu-item.specialty-bread:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 35px rgba(201, 124, 93, 0.2);
+}
+
+/* =============================================
+   MOBILE RESPONSIVE - SPECIALTY BREADS
+   ============================================= */
+
+@media (max-width: 768px) {
+    .bread-section-header {
+        padding: 1rem;
+        margin: 0.75rem 0;
+    }
+
+    .specialty-section-header {
+        padding: 1rem 1.25rem;
+    }
+
+    .bread-section-header h3 {
+        font-size: 1.3rem;
+    }
+
+    .bread-section-header p {
+        font-size: 0.9rem;
+    }
+
+    /* Ensure badge doesn't overlap image on mobile */
+    .menu-item.specialty-bread {
+        padding-top: 3rem;
+    }
+
+    .specialty-badge {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.8rem;
+    }
+
+    .cutoff-notice {
+        font-size: 0.8rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .bread-section-header h3 {
+        font-size: 1.2rem;
+        flex-wrap: wrap;
+    }
+
+    .menu-item.specialty-bread {
+        border-radius: 8px;
+    }
+
+    .specialty-badge {
+        font-size: 0.75rem;
+        padding: 0.4rem 0.5rem;
+    }
+}
