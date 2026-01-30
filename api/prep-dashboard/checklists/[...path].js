@@ -338,11 +338,18 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
   if (req.method === 'OPTIONS') return res.status(200).end();
-  if (!isAuthenticated(req)) return res.status(401).json({ error: 'Not authenticated' });
+
+  if (!isAuthenticated(req)) {
+    console.log('Auth failed. Cookie header:', req.headers.cookie);
+    return res.status(401).json({ error: 'Not authenticated' });
+  }
 
   try {
     const { method, query } = req;
     const pathParts = (query.path || []).filter(Boolean);
+
+    // Log request details for debugging
+    console.log('Checklist API request:', { method, pathParts, url: req.url });
 
   // GET template by ID: /api/prep-dashboard/checklists/baker-opening
   if (method === 'GET' && pathParts.length === 1 && pathParts[0] !== 'history') {
