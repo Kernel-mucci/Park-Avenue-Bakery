@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checklist | Park Avenue Bakery</title>
+    <meta name="robots" content="noindex, nofollow">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600;700&family=Questrial&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="dashboard.css">
+</head>
+<body class="dashboard-page checklist-flow-page">
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="loading-spinner"></div>
+        <p>Loading checklist...</p>
+    </div>
+
+    <!-- Main Content -->
+    <div id="dashboardContent" class="dashboard-container checklist-container" style="display: none;">
+        <!-- Header -->
+        <header class="checklist-header">
+            <div class="header-left">
+                <a href="checklists.html" class="back-link" title="Back to Checklists">&#8592; Back</a>
+            </div>
+            <div class="header-center">
+                <h1 id="checklistTitle">Checklist</h1>
+                <span id="progressCounter" class="progress-counter">0 / 0</span>
+            </div>
+            <div class="header-right">
+                <button id="saveExitBtn" class="btn btn-secondary">Save & Exit</button>
+            </div>
+        </header>
+
+        <!-- Progress Bar -->
+        <div class="checklist-progress-bar">
+            <div id="progressFill" class="progress-fill" style="width: 0%"></div>
+        </div>
+
+        <!-- Section Navigation -->
+        <nav id="sectionNav" class="section-nav">
+            <!-- Populated by JavaScript -->
+        </nav>
+
+        <!-- Current Section -->
+        <main id="checklistMain" class="checklist-main">
+            <div id="sectionTitle" class="section-title-bar">
+                <h2 id="currentSectionTitle">Section Title</h2>
+            </div>
+
+            <div id="itemsContainer" class="items-container">
+                <!-- Populated by JavaScript -->
+            </div>
+        </main>
+
+        <!-- Navigation Footer -->
+        <footer class="checklist-footer">
+            <button id="prevBtn" class="btn btn-nav btn-large" disabled>
+                &#8592; Previous
+            </button>
+            <div class="section-indicator">
+                <span id="sectionProgress">Section 1 of 4</span>
+            </div>
+            <button id="nextBtn" class="btn btn-primary btn-large">
+                Next &#8594;
+            </button>
+        </footer>
+    </div>
+
+    <!-- Completion Modal -->
+    <div id="completeModal" class="modal" style="display: none;">
+        <div class="modal-content modal-completion">
+            <div class="modal-header">
+                <h3>Complete Checklist?</h3>
+            </div>
+            <div class="modal-body">
+                <p id="completionMessage">All items have been completed. Ready to submit?</p>
+                <div id="alertsSummary" class="alerts-summary" style="display: none;">
+                    <!-- Populated if there are alerts -->
+                </div>
+                <div class="completion-name">
+                    <label for="staffName">Your Name:</label>
+                    <input type="text" id="staffName" placeholder="Enter your name" autocomplete="name">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="cancelCompleteBtn" class="btn btn-secondary">Cancel</button>
+                <button id="confirmCompleteBtn" class="btn btn-primary">Complete Checklist</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alert Toast -->
+    <div id="alertToast" class="alert-toast" style="display: none;">
+        <span class="alert-icon">&#9888;</span>
+        <span id="alertMessage" class="alert-message"></span>
+    </div>
+
+    <script src="checklist-flow.js"></script>
+</body>
+</html>

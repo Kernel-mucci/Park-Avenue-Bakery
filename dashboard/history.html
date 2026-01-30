@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checklist History | Park Avenue Bakery</title>
+    <meta name="robots" content="noindex, nofollow">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600;700&family=Questrial&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="dashboard.css">
+</head>
+<body class="dashboard-page">
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="loading-spinner"></div>
+        <p>Loading history...</p>
+    </div>
+
+    <!-- Main Content -->
+    <div id="dashboardContent" class="dashboard-container" style="display: none;">
+        <!-- Header -->
+        <header class="dashboard-header">
+            <div class="header-left">
+                <a href="checklists.html" class="back-link" title="Back to Checklists">&#8592;</a>
+                <span class="header-icon">&#128197;</span>
+                <h1>Checklist History</h1>
+            </div>
+            <div class="header-right">
+                <button id="logoutBtn" class="btn btn-logout" title="Logout">
+                    Logout
+                </button>
+            </div>
+        </header>
+
+        <!-- Filters -->
+        <div class="history-filters">
+            <div class="filter-group">
+                <label for="dateFrom">From:</label>
+                <input type="date" id="dateFrom">
+            </div>
+            <div class="filter-group">
+                <label for="dateTo">To:</label>
+                <input type="date" id="dateTo">
+            </div>
+            <div class="filter-group">
+                <label for="checklistType">Type:</label>
+                <select id="checklistType">
+                    <option value="">All Checklists</option>
+                    <option value="baker-opening">Baker Opening</option>
+                    <option value="pastry-opening">Pastry Opening</option>
+                    <option value="foh-opening">FOH Opening</option>
+                    <option value="closing">Closing</option>
+                    <option value="night-prep">Night Before Prep</option>
+                </select>
+            </div>
+            <button id="applyFilters" class="btn btn-primary">Apply</button>
+        </div>
+
+        <!-- History List -->
+        <main class="history-main">
+            <div id="historyList" class="history-list">
+                <div class="empty-message">Loading history...</div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="dashboard-footer">
+            <div class="footer-links">
+                <a href="checklists.html" class="btn btn-nav">&#8592; Today's Checklists</a>
+            </div>
+        </footer>
+    </div>
+
+    <script src="history.js"></script>
+</body>
+</html>
