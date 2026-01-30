@@ -1,5 +1,5 @@
-// api/prep-dashboard/checklists/[[...path]].js
-// Checklist API - handles all checklist routes for Park Avenue Bakery
+// api/prep-dashboard/checklists/[...path].js
+// Handles sub-routes: /api/prep-dashboard/checklists/:templateId, /history, etc.
 
 import crypto from 'crypto';
 
@@ -350,62 +350,6 @@ export default async function handler(req, res) {
 
     // Log request details for debugging
     console.log('Checklist API request:', { method, pathParts, url: req.url });
-
-    // GET /api/prep-dashboard/checklists - List all checklists for today
-    if (method === 'GET' && pathParts.length === 0) {
-      const date = query.date || getTodayString();
-      const todayCompletions = getAllCompletionsForDate(date);
-
-      const checklists = Object.values(CHECKLIST_TEMPLATES).map(template => {
-        const completion = todayCompletions.find(c => c.templateId === template.id);
-        const totalItems = countTotalItems(template);
-
-        if (completion && completion.completedAt) {
-          return {
-            templateId: template.id,
-            name: template.name,
-            scheduledTime: template.scheduledTime,
-            scheduledTimeDisplay: formatTime12Hour(template.scheduledTime),
-            status: 'complete',
-            completedAt: completion.completedAt,
-            completedBy: completion.completedBy,
-            alerts: (completion.alerts || []).length,
-            progress: totalItems,
-            total: totalItems
-          };
-        } else if (completion) {
-          return {
-            templateId: template.id,
-            name: template.name,
-            scheduledTime: template.scheduledTime,
-            scheduledTimeDisplay: formatTime12Hour(template.scheduledTime),
-            status: 'in-progress',
-            startedAt: completion.startedAt,
-            startedBy: completion.completedBy,
-            progress: countCompletedItems(completion),
-            total: totalItems
-          };
-        } else {
-          return {
-            templateId: template.id,
-            name: template.name,
-            scheduledTime: template.scheduledTime,
-            scheduledTimeDisplay: formatTime12Hour(template.scheduledTime),
-            status: 'not-started',
-            progress: 0,
-            total: totalItems
-          };
-        }
-      });
-
-      // Sort by scheduled time
-      checklists.sort((a, b) => a.scheduledTime.localeCompare(b.scheduledTime));
-
-      return res.status(200).json({
-        date,
-        checklists
-      });
-    }
 
     // GET template by ID: /api/prep-dashboard/checklists/baker-opening
     if (method === 'GET' && pathParts.length === 1 && pathParts[0] !== 'history') {
