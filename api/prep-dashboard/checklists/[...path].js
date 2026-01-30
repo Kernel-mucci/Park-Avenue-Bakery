@@ -340,8 +340,9 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (!isAuthenticated(req)) return res.status(401).json({ error: 'Not authenticated' });
 
-  const { method, query } = req;
-  const pathParts = (query.path || []).filter(Boolean);
+  try {
+    const { method, query } = req;
+    const pathParts = (query.path || []).filter(Boolean);
 
   // GET template by ID: /api/prep-dashboard/checklists/baker-opening
   if (method === 'GET' && pathParts.length === 1 && pathParts[0] !== 'history') {
@@ -469,4 +470,9 @@ export default async function handler(req, res) {
   }
 
   return res.status(405).json({ error: 'Method not allowed' });
+
+  } catch (error) {
+    console.error('Checklist API error:', error);
+    return res.status(500).json({ error: 'Internal server error', message: error.message });
+  }
 }
