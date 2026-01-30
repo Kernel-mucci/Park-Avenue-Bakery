@@ -91,20 +91,6 @@ function getMountainTime() {
     return new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Denver' }));
 }
 
-function formatDateForClover(dateString) {
-    // Convert YYYY-MM-DD to timestamp range for Clover API
-    const date = new Date(dateString + 'T00:00:00');
-    const startOfDay = new Date(date);
-    startOfDay.setHours(0, 0, 0, 0);
-    const endOfDay = new Date(date);
-    endOfDay.setHours(23, 59, 59, 999);
-
-    return {
-        start: startOfDay.getTime(),
-        end: endOfDay.getTime()
-    };
-}
-
 function formatTime12Hour(time24) {
     if (!time24) return 'N/A';
     const [hours, minutes] = time24.split(':');
@@ -118,7 +104,7 @@ function formatTime12Hour(time24) {
 // CLOVER API INTEGRATION
 // ============================================
 
-async function fetchCloverOrders(targetPickupDate) {
+async function fetchCloverOrders() {
     const CLOVER_API_KEY = process.env.CLOVER_API_KEY;
     const CLOVER_MERCHANT_ID = process.env.CLOVER_MERCHANT_ID;
 
@@ -284,16 +270,18 @@ function processOrders(orders, targetDate) {
 
         // Check if this is a same-day order (placed today for today)
         if (isToday && pickupDate === todayStr) {
+            // Convert order creation time to Mountain Time for accurate same-day detection
             const orderTime = new Date(order.createdTime);
-            const hour = orderTime.getHours();
-            // Orders placed after 10am for same-day pickup are flagged
+            const mtOrderTime = new Date(orderTime.toLocaleString('en-US', { timeZone: 'America/Denver' }));
+            const hour = mtOrderTime.getHours();
+            // Orders placed after 10am Mountain Time for same-day pickup are flagged
             if (hour >= 10) {
                 sameDayOrders.push({
                     id: order.id,
                     orderNumber: detailedOrder.orderNumber,
                     customerName,
                     time: formatTime12Hour(pickupTime),
-                    items: orderItems.length
+                    items: orderItems.reduce((sum, item) => sum + item.quantity, 0)
                 });
             }
         }
@@ -560,7 +548,7 @@ export default async function handler(req, res) {
 
         // Try to fetch from Clover, fall back to mock data if unavailable
         try {
-            orders = await fetchCloverOrders(date);
+            orders = await fetchCloverOrders();
         } catch (cloverError) {
             console.warn('Clover API unavailable, using mock data:', cloverError.message);
             // Use mock data for development/demo
