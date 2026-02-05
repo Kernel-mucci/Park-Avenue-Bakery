@@ -2,9 +2,9 @@
 // Handles GET /api/prep-dashboard/checklists - List all checklists
 
 import crypto from 'crypto';
-import { getChecklistStatus } from './_storage.js';
+import { kv } from '@vercel/kv';
 
-// Auth helpers (duplicated because Vercel serverless functions are isolated)
+// Auth helpers
 function generateSessionToken(password) {
   const secret = process.env.SESSION_SECRET || 'park-avenue-bakery-2026';
   return crypto.createHmac('sha256', secret).update(password).digest('hex');
@@ -34,6 +34,58 @@ function isAuthenticated(req) {
   return sessionToken && verifySessionToken(sessionToken);
 }
 
+// Date helpers
+function getMountainTime() {
+  return new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Denver' }));
+}
+
+function getTodayString() {
+  return getMountainTime().toISOString().split('T')[0];
+}
+
+function formatTime12Hour(time24) {
+  const [hours, minutes] = time24.split(':');
+  const hour = parseInt(hours, 10);
+  return `${hour % 12 || 12}:${minutes} ${hour >= 12 ? 'PM' : 'AM'}`;
+}
+
+// KV helpers
+async function getChecklistSession(date, templateId) {
+  try {
+    const key = `checklist:${date}:${templateId}`;
+    const data = await kv.get(key);
+    return data || { responses: {}, completion: null, progress: 0, total: 0 };
+  } catch (error) {
+    console.error('KV get error:', error);
+    return { responses: {}, completion: null, progress: 0, total: 0 };
+  }
+}
+
+async function getChecklistStatus(date, templateId, totalItems) {
+  try {
+    const session = await getChecklistSession(date, templateId);
+
+    if (session.completion) {
+      return {
+        status: 'completed',
+        progress: totalItems,
+        total: totalItems,
+        completedAt: session.completion.completedAt,
+        completedBy: session.completion.completedBy
+      };
+    }
+
+    if (session.progress > 0) {
+      return { status: 'in-progress', progress: session.progress, total: totalItems };
+    }
+
+    return { status: 'not-started', progress: 0, total: totalItems };
+  } catch (error) {
+    console.error('KV status error:', error);
+    return { status: 'not-started', progress: 0, total: totalItems };
+  }
+}
+
 // Checklist templates (minimal info needed for listing)
 const CHECKLIST_TEMPLATES = {
   'baker-opening': { id: 'baker-opening', name: 'Baker Opening', scheduledTime: '04:00', itemCount: 12 },
@@ -42,20 +94,6 @@ const CHECKLIST_TEMPLATES = {
   'closing': { id: 'closing', name: 'Closing', scheduledTime: '17:30', itemCount: 19 },
   'night-prep': { id: 'night-prep', name: 'Night Before Prep', scheduledTime: '17:00', itemCount: 6 }
 };
-
-function formatTime12Hour(time24) {
-  const [hours, minutes] = time24.split(':');
-  const hour = parseInt(hours, 10);
-  return `${hour % 12 || 12}:${minutes} ${hour >= 12 ? 'PM' : 'AM'}`;
-}
-
-function getMountainTime() {
-  return new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Denver' }));
-}
-
-function getTodayString() {
-  return getMountainTime().toISOString().split('T')[0];
-}
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
@@ -68,7 +106,7 @@ export default async function handler(req, res) {
   try {
     const date = req.query.date || getTodayString();
 
-    // Build checklist list with real status from persistent storage
+    // Build checklist list with real status from KV storage
     const checklistPromises = Object.values(CHECKLIST_TEMPLATES).map(async (template) => {
       const statusInfo = await getChecklistStatus(date, template.id, template.itemCount);
 
