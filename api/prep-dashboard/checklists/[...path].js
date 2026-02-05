@@ -347,15 +347,30 @@ export default async function handler(req, res) {
   try {
     const { method, query } = req;
 
-    // Parse path directly from req.url (simpler, more reliable)
-    // req.url is like "/api/prep-dashboard/checklists/baker-opening" or with query params
-    const pathname = (req.url || '').split('?')[0]; // Remove query string
-    const basePath = '/api/prep-dashboard/checklists/';
-    const subPath = pathname.startsWith(basePath) ? pathname.slice(basePath.length) : '';
-    const pathParts = subPath.split('/').filter(Boolean);
+    // Try multiple ways to get path segments (Vercel behavior varies)
+    let pathParts = [];
+
+    // Method 1: Vercel catch-all query parameter
+    if (query.path) {
+      pathParts = Array.isArray(query.path) ? query.path : [query.path];
+    }
+
+    // Method 2: Parse from req.url if query.path didn't work
+    if (pathParts.length === 0 && req.url) {
+      const pathname = req.url.split('?')[0];
+      const basePath = '/api/prep-dashboard/checklists/';
+      if (pathname.startsWith(basePath)) {
+        pathParts = pathname.slice(basePath.length).split('/').filter(Boolean);
+      }
+    }
 
     // Log request details for debugging
-    console.log('Checklist API request:', { method, pathParts, pathname, reqUrl: req.url });
+    console.log('Checklist API request:', {
+      method,
+      pathParts,
+      queryPath: query.path,
+      reqUrl: req.url
+    });
 
     // GET template by ID: /api/prep-dashboard/checklists/baker-opening
     if (method === 'GET' && pathParts.length === 1 && pathParts[0] !== 'history') {
