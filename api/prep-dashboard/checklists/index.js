@@ -2,6 +2,7 @@
 // Handles GET /api/prep-dashboard/checklists - List all checklists
 
 import crypto from 'crypto';
+import { getChecklistStatus } from './_storage.js';
 
 // Auth helpers (duplicated because Vercel serverless functions are isolated)
 function generateSessionToken(password) {
@@ -67,18 +68,24 @@ export default async function handler(req, res) {
   try {
     const date = req.query.date || getTodayString();
 
-    // Return list of checklists with their status
-    // Note: In this MVP, we don't track completion state across function invocations
-    // Each function instance has its own memory, so we show all as not-started
-    const checklists = Object.values(CHECKLIST_TEMPLATES).map(template => ({
-      templateId: template.id,
-      name: template.name,
-      scheduledTime: template.scheduledTime,
-      scheduledTimeDisplay: formatTime12Hour(template.scheduledTime),
-      status: 'not-started',
-      progress: 0,
-      total: template.itemCount
-    }));
+    // Build checklist list with real status from persistent storage
+    const checklistPromises = Object.values(CHECKLIST_TEMPLATES).map(async (template) => {
+      const statusInfo = await getChecklistStatus(date, template.id, template.itemCount);
+
+      return {
+        templateId: template.id,
+        name: template.name,
+        scheduledTime: template.scheduledTime,
+        scheduledTimeDisplay: formatTime12Hour(template.scheduledTime),
+        status: statusInfo.status,
+        progress: statusInfo.progress,
+        total: statusInfo.total,
+        completedAt: statusInfo.completedAt || null,
+        completedBy: statusInfo.completedBy || null
+      };
+    });
+
+    const checklists = await Promise.all(checklistPromises);
 
     // Sort by scheduled time
     checklists.sort((a, b) => a.scheduledTime.localeCompare(b.scheduledTime));

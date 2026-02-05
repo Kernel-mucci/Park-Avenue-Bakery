@@ -2,6 +2,7 @@
 // GET /api/prep-dashboard/checklists/:id - Get a specific checklist template
 
 import crypto from 'crypto';
+import { getChecklistSession } from './_storage.js';
 
 // Auth helpers
 function generateSessionToken(password) {
@@ -264,13 +265,18 @@ export default async function handler(req, res) {
     }
 
     const date = req.query.date || getTodayString();
+    const totalItems = countTotalItems(template);
+
+    // Get saved session data from persistent storage
+    const session = await getChecklistSession(date, id);
 
     return res.status(200).json({
       template,
       date,
-      completion: null,
-      progress: 0,
-      total: countTotalItems(template)
+      responses: session.responses || {},
+      completion: session.completion || null,
+      progress: session.progress || 0,
+      total: totalItems
     });
   } catch (error) {
     console.error('Checklist API error:', error);

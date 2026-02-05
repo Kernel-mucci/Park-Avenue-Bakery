@@ -2,6 +2,7 @@
 // GET /api/prep-dashboard/checklists/history - Get checklist completion history
 
 import crypto from 'crypto';
+import { getCompletionsInRange } from './_storage.js';
 
 // Auth helpers
 function generateSessionToken(password) {
@@ -41,6 +42,15 @@ function getTodayString() {
   return getMountainTime().toISOString().split('T')[0];
 }
 
+// Checklist template names for enriching history results
+const TEMPLATE_NAMES = {
+  'baker-opening': 'Baker Opening',
+  'pastry-opening': 'Pastry Opening',
+  'foh-opening': 'FOH Opening',
+  'closing': 'Closing',
+  'night-prep': 'Night Before Prep'
+};
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -53,11 +63,19 @@ export default async function handler(req, res) {
     const fromDate = req.query.from || getTodayString();
     const toDate = req.query.to || getTodayString();
 
-    // MVP: Return empty history (in-memory storage doesn't persist across function invocations)
+    // Get completions from persistent storage
+    const completions = await getCompletionsInRange(fromDate, toDate);
+
+    // Enrich with template names
+    const enrichedCompletions = completions.map(c => ({
+      ...c,
+      name: TEMPLATE_NAMES[c.templateId] || c.templateId
+    }));
+
     return res.status(200).json({
       from: fromDate,
       to: toDate,
-      completions: []
+      completions: enrichedCompletions
     });
   } catch (error) {
     console.error('Checklist history error:', error);
