@@ -2720,6 +2720,105 @@ footer {
 }
 
 /* ============================================
+   ORDER GUARDRAILS - TASK 5
+   ============================================ */
+
+/* Checkout button states */
+.checkout-btn.checkout-ready {
+    background: var(--terracotta);
+    cursor: pointer;
+}
+
+.checkout-btn.checkout-ready:hover {
+    background: #b86e50;
+    transform: translateY(-2px);
+}
+
+.checkout-btn.checkout-blocked {
+    background: #999;
+    cursor: not-allowed;
+    opacity: 0.8;
+}
+
+.checkout-btn.checkout-blocked:hover {
+    transform: none;
+}
+
+/* Large order message */
+.large-order-message {
+    background: rgba(201, 124, 93, 0.1);
+    border: 2px solid var(--terracotta);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+.large-order-message p {
+    margin: 0 0 0.75rem 0;
+    color: var(--deep-brown);
+    font-size: 0.9rem;
+}
+
+.large-order-message i {
+    color: var(--terracotta);
+    margin-right: 0.5rem;
+}
+
+.large-order-actions {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.btn-call,
+.btn-custom {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.btn-call {
+    background: var(--terracotta);
+    color: white;
+}
+
+.btn-call:hover {
+    background: #b86e50;
+    transform: translateY(-2px);
+}
+
+.btn-custom {
+    background: var(--deep-brown);
+    color: white;
+}
+
+.btn-custom:hover {
+    background: #3a2a1a;
+    transform: translateY(-2px);
+}
+
+/* Category cap reached state for add-to-cart buttons */
+.add-to-cart-btn.cap-reached {
+    background: #ccc;
+    color: #666;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.add-to-cart-btn.cap-reached:hover {
+    transform: none;
+    background: #ccc;
+}
+
+/* ============================================
    RESPONSIVE DESIGN
    ============================================ */
 
