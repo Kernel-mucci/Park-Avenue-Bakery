@@ -1,0 +1,13 @@
+{
+  "name": "park-avenue-bakery",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Park Avenue Bakery - Online ordering system",
+  "type": "module",
+  "dependencies": {
+    "@vercel/kv": "^3.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

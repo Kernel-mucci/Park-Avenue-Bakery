@@ -208,6 +208,18 @@ const BARS = {
 };
 
 // ============================================
+// PASTRIES (Future - uncomment when menu expands)
+// ============================================
+
+const PASTRIES = {
+  // Add pastry items here when menu expands
+  // Example:
+  // 'pastry-1': { name: 'Croissant', dailyLimit: 24, sameDayAllowed: true },
+  // 'pastry-2': { name: 'Pain au Chocolat', dailyLimit: 18, sameDayAllowed: true },
+  // 'pastry-3': { name: 'Almond Croissant', dailyLimit: 12, sameDayAllowed: true },
+};
+
+// ============================================
 // COOKIES
 // ============================================
 
@@ -414,6 +426,7 @@ function isEverydayItemAvailable(itemId, pickupDate, category = 'breads') {
   switch(category) {
     case 'bars': itemList = BARS; break;
     case 'cookies': itemList = COOKIES; break;
+    case 'pastries': itemList = PASTRIES; break;
     default: itemList = EVERYDAY_BREADS;
   }
 
@@ -458,7 +471,8 @@ function getAvailableItems(pickupDate) {
   const available = {
     breads: [],
     bars: [],
-    cookies: []
+    cookies: [],
+    pastries: []
   };
 
   // Check specialty breads
@@ -498,6 +512,14 @@ function getAvailableItems(pickupDate) {
     const check = isEverydayItemAvailable(id, pickupDate, 'cookies');
     if (check.available) {
       available.cookies.push({ id, ...item });
+    }
+  }
+
+  // Check pastries (future use)
+  for (const [id, item] of Object.entries(PASTRIES)) {
+    const check = isEverydayItemAvailable(id, pickupDate, 'pastries');
+    if (check.available) {
+      available.pastries.push({ id, ...item });
     }
   }
 
@@ -626,6 +648,19 @@ function validateOrder(order) {
         errors.push(`Maximum ${rule.dailyLimit} ${rule.name} can be ordered online. For larger orders, please call the bakery.`);
       }
     }
+
+    // Check pastries (future use)
+    else if (PASTRIES[item.id]) {
+      const check = isEverydayItemAvailable(item.id, pickupDate, 'pastries');
+      if (!check.available) {
+        errors.push(check.reason);
+      }
+
+      const rule = PASTRIES[item.id];
+      if (item.quantity > rule.dailyLimit) {
+        errors.push(`Maximum ${rule.dailyLimit} ${rule.name} can be ordered online. For larger orders, please call the bakery.`);
+      }
+    }
   }
 
   return {
@@ -700,6 +735,7 @@ export {
   EVERYDAY_BREADS,
   BARS,
   COOKIES,
+  PASTRIES,
   PICKUP_SLOTS,
   BLACKOUT_DATES_2026,
   isSpecialtyBreadAvailable,

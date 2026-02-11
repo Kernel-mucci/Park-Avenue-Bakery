@@ -1,9 +1,13 @@
-// api/prep-dashboard/checklists/[id].js
-// GET /api/prep-dashboard/checklists/:id - Get a specific checklist template
+// api/prep-dashboard/checklists/[...path].js
+// Catch-all route for checklist operations with Vercel KV storage
 
 import crypto from 'crypto';
+import { kv } from '@vercel/kv';
 
-// Auth helpers
+// ============================================
+// AUTH HELPERS
+// ============================================
+
 function generateSessionToken(password) {
   const secret = process.env.SESSION_SECRET || 'park-avenue-bakery-2026';
   return crypto.createHmac('sha256', secret).update(password).digest('hex');
@@ -33,7 +37,141 @@ function isAuthenticated(req) {
   return sessionToken && verifySessionToken(sessionToken);
 }
 
-// Checklist templates
+// ============================================
+// DATE HELPERS
+// ============================================
+
+function getMountainTime() {
+  return new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Denver' }));
+}
+
+function getTodayString() {
+  return getMountainTime().toISOString().split('T')[0];
+}
+
+// ============================================
+// KV STORAGE HELPERS
+// ============================================
+
+function getChecklistKey(date, templateId) {
+  return `checklist:${date}:${templateId}`;
+}
+
+function getCompletionsIndexKey(date) {
+  return `checklist-completions:${date}`;
+}
+
+async function getChecklistSession(date, templateId) {
+  try {
+    const key = getChecklistKey(date, templateId);
+    const data = await kv.get(key);
+    return data || { responses: {}, completion: null, progress: 0, total: 0 };
+  } catch (error) {
+    console.error('KV get error:', error);
+    return { responses: {}, completion: null, progress: 0, total: 0 };
+  }
+}
+
+async function saveResponse(date, templateId, itemId, value, totalItems) {
+  try {
+    const key = getChecklistKey(date, templateId);
+    const session = await getChecklistSession(date, templateId);
+
+    session.responses[itemId] = value;
+    session.total = totalItems;
+    session.progress = Object.values(session.responses).filter(v => v !== null && v !== undefined && v !== '').length;
+
+    await kv.set(key, session);
+    return { success: true, progress: session.progress, total: session.total };
+  } catch (error) {
+    console.error('KV save error:', error);
+    throw error;
+  }
+}
+
+async function markComplete(date, templateId, completedBy, totalItems) {
+  try {
+    const key = getChecklistKey(date, templateId);
+    const session = await getChecklistSession(date, templateId);
+
+    const completion = {
+      id: `${date}-${templateId}-${Date.now()}`,
+      templateId,
+      date,
+      completedAt: new Date().toISOString(),
+      completedBy: completedBy || 'Staff',
+      responses: session.responses
+    };
+
+    session.completion = completion;
+    session.progress = totalItems;
+    session.total = totalItems;
+
+    await kv.set(key, session);
+
+    // Add to completions index
+    const indexKey = getCompletionsIndexKey(date);
+    const index = await kv.get(indexKey) || {};
+    index[templateId] = completion;
+    await kv.set(indexKey, index);
+
+    return { success: true, completion };
+  } catch (error) {
+    console.error('KV complete error:', error);
+    throw error;
+  }
+}
+
+async function getChecklistStatus(date, templateId, totalItems) {
+  try {
+    const session = await getChecklistSession(date, templateId);
+
+    if (session.completion) {
+      return {
+        status: 'completed',
+        progress: totalItems,
+        total: totalItems,
+        completedAt: session.completion.completedAt,
+        completedBy: session.completion.completedBy
+      };
+    }
+
+    if (session.progress > 0) {
+      return { status: 'in-progress', progress: session.progress, total: totalItems };
+    }
+
+    return { status: 'not-started', progress: 0, total: totalItems };
+  } catch (error) {
+    console.error('KV status error:', error);
+    return { status: 'not-started', progress: 0, total: totalItems };
+  }
+}
+
+async function getCompletionsInRange(fromDate, toDate) {
+  try {
+    const completions = [];
+    const from = new Date(fromDate);
+    const to = new Date(toDate);
+
+    const current = new Date(from);
+    while (current <= to) {
+      const dateStr = current.toISOString().split('T')[0];
+      const index = await kv.get(getCompletionsIndexKey(dateStr)) || {};
+      completions.push(...Object.values(index));
+      current.setDate(current.getDate() + 1);
+    }
+
+    return completions.sort((a, b) => new Date(b.completedAt) - new Date(a.completedAt));
+  } catch (error) {
+    console.error('KV range error:', error);
+    return [];
+  }
+}
+
+// ============================================
+// CHECKLIST TEMPLATES
+// ============================================
+
 const CHECKLIST_TEMPLATES = {
   'baker-opening': {
     id: 'baker-opening',
@@ -233,45 +371,125 @@ const CHECKLIST_TEMPLATES = {
   }
 };
 
-// Helper functions
-function getMountainTime() {
-  return new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Denver' }));
-}
-
-function getTodayString() {
-  return getMountainTime().toISOString().split('T')[0];
-}
-
 function countTotalItems(template) {
   return template.sections.reduce((sum, s) => sum + s.items.length, 0);
 }
 
+function formatTime12Hour(time24) {
+  const [hours, minutes] = time24.split(':');
+  const hour = parseInt(hours, 10);
+  return `${hour % 12 || 12}:${minutes} ${hour >= 12 ? 'PM' : 'AM'}`;
+}
+
+// Template names for history
+const TEMPLATE_NAMES = {
+  'baker-opening': 'Baker Opening',
+  'pastry-opening': 'Pastry Opening',
+  'foh-opening': 'FOH Opening',
+  'closing': 'Closing',
+  'night-prep': 'Night Before Prep'
+};
+
+// ============================================
+// ROUTE HANDLER
+// ============================================
+
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (!isAuthenticated(req)) return res.status(401).json({ error: 'Not authenticated' });
-  if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
+
+  // Parse path from query parameter
+  const pathSegments = req.query.path || [];
+  const pathString = Array.isArray(pathSegments) ? pathSegments.join('/') : pathSegments;
+
+  console.log('Checklist API path:', pathString, 'method:', req.method);
 
   try {
-    const { id } = req.query;
-    console.log('Checklist [id].js called with id:', id);
+    // GET /history - Get completion history
+    if (pathString === 'history' && req.method === 'GET') {
+      const fromDate = req.query.from || getTodayString();
+      const toDate = req.query.to || getTodayString();
 
-    const template = CHECKLIST_TEMPLATES[id];
-    if (!template) {
-      return res.status(404).json({ error: 'Checklist not found', requestedId: id });
+      const completions = await getCompletionsInRange(fromDate, toDate);
+      const enriched = completions.map(c => ({ ...c, name: TEMPLATE_NAMES[c.templateId] || c.templateId }));
+
+      return res.status(200).json({ from: fromDate, to: toDate, completions: enriched });
     }
 
-    const date = req.query.date || getTodayString();
+    // GET /:id - Get single checklist template
+    if (pathSegments.length === 1 && req.method === 'GET') {
+      const id = pathSegments[0];
+      const template = CHECKLIST_TEMPLATES[id];
 
-    return res.status(200).json({
-      template,
-      date,
-      completion: null,
-      progress: 0,
-      total: countTotalItems(template)
-    });
+      if (!template) {
+        return res.status(404).json({ error: 'Checklist not found', requestedId: id });
+      }
+
+      const date = req.query.date || getTodayString();
+      const totalItems = countTotalItems(template);
+      const session = await getChecklistSession(date, id);
+
+      return res.status(200).json({
+        template,
+        date,
+        responses: session.responses || {},
+        completion: session.completion || null,
+        progress: session.progress || 0,
+        total: totalItems
+      });
+    }
+
+    // POST /:id/response - Save item response
+    if (pathSegments.length === 2 && pathSegments[1] === 'response' && req.method === 'POST') {
+      const id = pathSegments[0];
+      const { itemId, value, date } = req.body;
+
+      if (!itemId || value === undefined) {
+        return res.status(400).json({ error: 'itemId and value are required' });
+      }
+
+      const template = CHECKLIST_TEMPLATES[id];
+      if (!template) {
+        return res.status(404).json({ error: 'Checklist not found' });
+      }
+
+      const checklistDate = date || getTodayString();
+      const totalItems = countTotalItems(template);
+      const result = await saveResponse(checklistDate, id, itemId, value, totalItems);
+
+      return res.status(200).json({ success: true, progress: result.progress, total: result.total, alert: null });
+    }
+
+    // POST /:id/complete - Mark checklist complete
+    if (pathSegments.length === 2 && pathSegments[1] === 'complete' && req.method === 'POST') {
+      const id = pathSegments[0];
+      const { completedBy, date } = req.body;
+
+      const template = CHECKLIST_TEMPLATES[id];
+      if (!template) {
+        return res.status(404).json({ error: 'Checklist not found' });
+      }
+
+      const checklistDate = date || getTodayString();
+      const totalItems = countTotalItems(template);
+      const result = await markComplete(checklistDate, id, completedBy, totalItems);
+
+      return res.status(200).json({ success: true, completion: result.completion });
+    }
+
+    // POST /:id/photo - Upload photo (stub)
+    if (pathSegments.length === 2 && pathSegments[1] === 'photo' && req.method === 'POST') {
+      return res.status(200).json({
+        success: true,
+        message: 'Photo upload acknowledged (storage not implemented)',
+        url: null
+      });
+    }
+
+    return res.status(404).json({ error: 'Route not found', path: pathString });
   } catch (error) {
     console.error('Checklist API error:', error);
     return res.status(500).json({ error: 'Internal server error', message: error.message });

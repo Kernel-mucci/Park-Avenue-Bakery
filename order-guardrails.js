@@ -93,6 +93,39 @@ class OrderGuardrails {
 
         // Fetch available items from API
         await this.fetchAvailableItems(selectedDate);
+
+        // Task 4: Re-validate cart against new date's available items
+        this.revalidateCart();
+    }
+
+    // Task 4: Re-validate cart items when pickup date changes
+    revalidateCart() {
+        if (typeof cart === 'undefined' || !this.availableItems) return;
+
+        const availableIds = this.getAvailableItemIds();
+        const removedItems = [];
+
+        // Find items in cart that are no longer available
+        cart.items = cart.items.filter(item => {
+            if (availableIds.includes(item.id)) {
+                return true; // keep
+            } else {
+                removedItems.push(item.name);
+                return false; // remove
+            }
+        });
+
+        if (removedItems.length > 0) {
+            cart.saveCart();
+            cart.render();
+
+            // Notify user
+            const message = removedItems.length === 1
+                ? `${removedItems[0]} was removed from your cart — not available for this pickup date.`
+                : `${removedItems.length} items were removed from your cart — not available for this pickup date: ${removedItems.join(', ')}`;
+
+            cart.showNotification(message);
+        }
     }
 
     async fetchAvailableItems(pickupDate) {
@@ -274,6 +307,10 @@ class OrderGuardrails {
         }
         if (this.availableItems.cookies) {
             this.availableItems.cookies.forEach(item => ids.push(item.id));
+        }
+        // Task 3: Future pastries support
+        if (this.availableItems.pastries) {
+            this.availableItems.pastries.forEach(item => ids.push(item.id));
         }
 
         return ids;

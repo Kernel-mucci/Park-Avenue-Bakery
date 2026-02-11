@@ -12,6 +12,17 @@ class ShoppingCart {
     constructor() {
         this.items = [];
         this.MAX_QUANTITY = 99;
+
+        // Task 1 & 3: Category caps
+        this.CATEGORY_CAPS = {
+            breads: { max: 4, label: 'loaves' },
+            'cookies-bars': { max: 12, label: 'cookies/bars' },
+            pastries: { max: 12, label: 'pastries' }
+        };
+
+        // Task 2: Large order threshold
+        this.LARGE_ORDER_THRESHOLD = 10;
+
         this.loadCart();
         this.init();
     }
@@ -42,6 +53,34 @@ class ShoppingCart {
         this.render();
     }
 
+    // Task 1: Determine category from item ID
+    getCategoryForItem(itemId) {
+        if (itemId.startsWith('bread-') || itemId === 'test-1') return 'breads';
+        if (itemId.startsWith('bar-') || itemId.startsWith('cookie-')) return 'cookies-bars';
+        if (itemId.startsWith('pastry-')) return 'pastries';
+        return null; // unknown category, no cap
+    }
+
+    // Task 1: Count items in a category
+    getCategoryCount(category) {
+        return this.items
+            .filter(item => this.getCategoryForItem(item.id) === category)
+            .reduce((sum, item) => sum + item.quantity, 0);
+    }
+
+    // Task 1: Check if category is at cap
+    isCategoryAtCap(category) {
+        if (!category || !this.CATEGORY_CAPS[category]) return false;
+        return this.getCategoryCount(category) >= this.CATEGORY_CAPS[category].max;
+    }
+
+    // Task 1: Get cap message for a category
+    getCategoryCapMessage(category) {
+        const cap = this.CATEGORY_CAPS[category];
+        if (!cap) return null;
+        return `Maximum ${cap.max} ${cap.label} per order. Call us at (406) 449-8424 for larger quantities.`;
+    }
+
     addItem(e) {
         const btn = e.currentTarget;
         const price = parseFloat(btn.dataset.price);
@@ -69,8 +108,23 @@ class ShoppingCart {
             return;
         }
 
+        const itemId = btn.dataset.id;
+
+        // Task 2: Check large order threshold
+        if (this.getTotalItems() + 1 >= this.LARGE_ORDER_THRESHOLD) {
+            this.showLargeOrderMessage();
+            return;
+        }
+
+        // Task 1: Check category cap
+        const category = this.getCategoryForItem(itemId);
+        if (category && this.isCategoryAtCap(category)) {
+            this.showNotification(this.getCategoryCapMessage(category));
+            return;
+        }
+
         const item = {
-            id: btn.dataset.id,
+            id: itemId,
             name: btn.dataset.name,
             price: price,
             image: btn.dataset.image,
@@ -80,6 +134,11 @@ class ShoppingCart {
         const existingItem = this.items.find(i => i.id === item.id);
 
         if (existingItem) {
+            // Task 1: Check if incrementing would exceed category cap
+            if (category && this.getCategoryCount(category) + 1 > this.CATEGORY_CAPS[category].max) {
+                this.showNotification(this.getCategoryCapMessage(category));
+                return;
+            }
             if (existingItem.quantity >= this.MAX_QUANTITY) {
                 this.showNotification(`Maximum quantity (${this.MAX_QUANTITY}) reached.`);
                 return;
@@ -106,8 +165,28 @@ class ShoppingCart {
             const newQty = item.quantity + change;
             if (newQty <= 0) {
                 this.removeItem(id);
-            } else if (newQty > this.MAX_QUANTITY) {
-                this.showNotification(`Maximum quantity (${this.MAX_QUANTITY}) reached.`);
+            } else if (change > 0) {
+                // Task 2: Check large order threshold when increasing
+                if (this.getTotalItems() + change >= this.LARGE_ORDER_THRESHOLD) {
+                    this.showLargeOrderMessage();
+                    return;
+                }
+                // Task 1: Check category cap when increasing
+                const category = this.getCategoryForItem(id);
+                if (category && this.CATEGORY_CAPS[category]) {
+                    const currentCount = this.getCategoryCount(category);
+                    if (currentCount + change > this.CATEGORY_CAPS[category].max) {
+                        this.showNotification(this.getCategoryCapMessage(category));
+                        return;
+                    }
+                }
+                if (newQty > this.MAX_QUANTITY) {
+                    this.showNotification(`Maximum quantity (${this.MAX_QUANTITY}) reached.`);
+                    return;
+                }
+                item.quantity = newQty;
+                this.saveCart();
+                this.render();
             } else {
                 item.quantity = newQty;
                 this.saveCart();
@@ -145,8 +224,26 @@ class ShoppingCart {
         // Update total
         totalAmount.textContent = `$${this.getTotal().toFixed(2)}`;
 
-        // Enable/disable checkout button
-        checkoutBtn.disabled = this.items.length === 0;
+        // Task 5: Checkout button states
+        if (totalItems === 0) {
+            // State: Empty cart
+            checkoutBtn.disabled = true;
+            checkoutBtn.className = 'checkout-btn';
+            checkoutBtn.innerHTML = '<i class="fas fa-credit-card"></i> Checkout';
+            this.hideLargeOrderMessage();
+        } else if (totalItems >= this.LARGE_ORDER_THRESHOLD) {
+            // State: Large order blocked
+            checkoutBtn.disabled = true;
+            checkoutBtn.className = 'checkout-btn checkout-blocked';
+            checkoutBtn.innerHTML = '<i class="fas fa-phone"></i> Call to Order';
+            this.showLargeOrderMessage();
+        } else {
+            // State: Ready to checkout
+            checkoutBtn.disabled = false;
+            checkoutBtn.className = 'checkout-btn checkout-ready';
+            checkoutBtn.innerHTML = '<i class="fas fa-credit-card"></i> Checkout';
+            this.hideLargeOrderMessage();
+        }
 
         // Render cart items
         if (this.items.length === 0) {
@@ -199,6 +296,13 @@ class ShoppingCart {
                 plusBtn.innerHTML = '<i class="fas fa-plus"></i>';
                 plusBtn.addEventListener('click', () => this.updateQuantity(item.id, 1));
 
+                // Task 1: Disable plus button if category is at cap or large order threshold
+                const itemCategory = this.getCategoryForItem(item.id);
+                if (this.isCategoryAtCap(itemCategory) || totalItems >= this.LARGE_ORDER_THRESHOLD) {
+                    plusBtn.disabled = true;
+                    plusBtn.title = this.isCategoryAtCap(itemCategory) ? 'Category limit reached' : 'Order limit reached';
+                }
+
                 const removeBtn = document.createElement('button');
                 removeBtn.className = 'remove-item';
                 removeBtn.setAttribute('aria-label', `Remove ${item.name} from cart`);
@@ -211,6 +315,71 @@ class ShoppingCart {
                 cartItemsContainer.appendChild(cartItem);
             });
         }
+
+        // Task 1: Update menu "Add to Cart" buttons for category caps
+        this.updateMenuButtonStates();
+    }
+
+    // Task 1: Update menu button states based on category caps
+    updateMenuButtonStates() {
+        const totalItems = this.getTotalItems();
+        document.querySelectorAll('.add-to-cart-btn').forEach(btn => {
+            const itemId = btn.dataset.id;
+            const category = this.getCategoryForItem(itemId);
+
+            // Skip if button is already disabled by guardrails (unavailable item)
+            if (btn.closest('.menu-item')?.classList.contains('unavailable')) return;
+
+            // Check large order threshold
+            if (totalItems >= this.LARGE_ORDER_THRESHOLD) {
+                btn.classList.add('cap-reached');
+                btn.disabled = true;
+                btn.title = 'Order limit reached';
+                return;
+            }
+
+            // Check category cap
+            if (category && this.isCategoryAtCap(category)) {
+                btn.classList.add('cap-reached');
+                btn.disabled = true;
+                btn.title = this.getCategoryCapMessage(category);
+            } else {
+                btn.classList.remove('cap-reached');
+                // Only re-enable if not disabled by guardrails
+                if (!btn.closest('.menu-item')?.classList.contains('unavailable')) {
+                    btn.disabled = false;
+                    btn.title = '';
+                }
+            }
+        });
+    }
+
+    // Task 2 & 5: Show large order message in cart footer
+    showLargeOrderMessage() {
+        let msg = document.getElementById('largeOrderMsg');
+        if (!msg) {
+            msg = document.createElement('div');
+            msg.id = 'largeOrderMsg';
+            msg.className = 'large-order-message';
+            msg.innerHTML = `
+                <p><i class="fas fa-info-circle"></i> Orders of 10+ items require a phone call or custom order request.</p>
+                <div class="large-order-actions">
+                    <a href="tel:4064498424" class="btn-call"><i class="fas fa-phone"></i> (406) 449-8424</a>
+                    <a href="custom-orders.html" class="btn-custom"><i class="fas fa-clipboard-list"></i> Custom Order</a>
+                </div>
+            `;
+            const cartFooter = document.querySelector('.cart-footer');
+            if (cartFooter) {
+                cartFooter.insertBefore(msg, cartFooter.firstChild);
+            }
+        }
+        msg.style.display = 'block';
+    }
+
+    // Task 2 & 5: Hide large order message
+    hideLargeOrderMessage() {
+        const msg = document.getElementById('largeOrderMsg');
+        if (msg) msg.style.display = 'none';
     }
 
     filterCategory(e) {
@@ -237,6 +406,13 @@ class ShoppingCart {
 
     checkout() {
         if (this.items.length === 0) return;
+
+        // Task 2: Safety check for large orders
+        if (this.getTotalItems() >= this.LARGE_ORDER_THRESHOLD) {
+            this.showLargeOrderMessage();
+            this.showNotification('Orders of 10+ items require a phone call. Please use the contact options above.');
+            return;
+        }
 
         // Get pickup date from order guardrails
         let pickupDate = null;
