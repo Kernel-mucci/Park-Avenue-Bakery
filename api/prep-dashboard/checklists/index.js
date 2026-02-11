@@ -88,11 +88,11 @@ async function getChecklistStatus(date, templateId, totalItems) {
 
 // Checklist templates (minimal info needed for listing)
 const CHECKLIST_TEMPLATES = {
-  'baker-opening': { id: 'baker-opening', name: 'Baker Opening', scheduledTime: '04:00', itemCount: 12 },
-  'pastry-opening': { id: 'pastry-opening', name: 'Pastry Opening', scheduledTime: '05:00', itemCount: 9 },
-  'foh-opening': { id: 'foh-opening', name: 'FOH Opening', scheduledTime: '06:30', itemCount: 13 },
-  'closing': { id: 'closing', name: 'Closing', scheduledTime: '17:30', itemCount: 19 },
-  'night-prep': { id: 'night-prep', name: 'Night Before Prep', scheduledTime: '17:00', itemCount: 6 }
+  'baker-opening': { id: 'baker-opening', name: 'Baker Opening', scheduledTime: '04:00', itemCount: 14 },
+  'pastry-opening': { id: 'pastry-opening', name: 'Pastry Opening', scheduledTime: '05:00', itemCount: 10 },
+  'foh-opening': { id: 'foh-opening', name: 'FOH Opening', scheduledTime: '06:30', itemCount: 15 },
+  'closing': { id: 'closing', name: 'Closing', scheduledTime: '17:30', itemCount: 25 },
+  'night-prep': { id: 'night-prep', name: 'Night Before Prep', scheduledTime: '17:00', itemCount: 7 }
 };
 
 export default async function handler(req, res) {
