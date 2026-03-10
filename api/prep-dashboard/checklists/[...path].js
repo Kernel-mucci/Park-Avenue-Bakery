@@ -401,11 +401,37 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (!isAuthenticated(req)) return res.status(401).json({ error: 'Not authenticated' });
 
-  // Parse path segments from Vercel catch-all query parameter
-  const { query } = req;
-  const pathSegments = Array.isArray(query.path) ? query.path : query.path ? [query.path] : [];
-  const pathString = pathSegments.join('/');
+  // Debug: Log what Vercel actually provides
+  console.log('Checklist API debug:', JSON.stringify({
+    url: req.url,
+    query: req.query,
+    host: req.headers.host
+  }));
 
+  // Parse path segments - try req.query.path first, fall back to URL parsing
+  let pathSegments = [];
+
+  // Method 1: Vercel catch-all query parameter
+  if (req.query.path) {
+    pathSegments = Array.isArray(req.query.path) ? req.query.path : [req.query.path];
+  }
+
+  // Method 2: Fallback to URL parsing if query.path is empty
+  if (pathSegments.length === 0 && req.url) {
+    try {
+      const url = new URL(req.url, 'https://' + (req.headers.host || 'localhost'));
+      const pathname = url.pathname;
+      // Extract path after /api/prep-dashboard/checklists/
+      const match = pathname.match(/\/api\/prep-dashboard\/checklists\/(.+)/);
+      if (match && match[1]) {
+        pathSegments = match[1].split('/').filter(Boolean);
+      }
+    } catch (e) {
+      console.error('URL parsing fallback failed:', e.message);
+    }
+  }
+
+  const pathString = pathSegments.join('/');
   console.log('Checklist API path:', pathString, 'segments:', pathSegments, 'method:', req.method);
 
   try {
