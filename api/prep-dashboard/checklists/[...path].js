@@ -1,8 +1,13 @@
 // api/prep-dashboard/checklists/[...path].js
-// Catch-all route for checklist operations with Vercel KV storage
+// Catch-all route for checklist operations with Upstash Redis storage
 
 import crypto from 'crypto';
-import { kv } from '@vercel/kv';
+import { Redis } from '@upstash/redis';
+
+const redis = new Redis({
+  url: process.env.UPSTASH_REDIS_REST_URL,
+  token: process.env.UPSTASH_REDIS_REST_TOKEN,
+});
 
 // ============================================
 // AUTH HELPERS
@@ -50,7 +55,7 @@ function getTodayString() {
 }
 
 // ============================================
-// KV STORAGE HELPERS
+// REDIS STORAGE HELPERS (Upstash Redis)
 // ============================================
 
 function getChecklistKey(date, templateId) {
@@ -64,10 +69,10 @@ function getCompletionsIndexKey(date) {
 async function getChecklistSession(date, templateId) {
   try {
     const key = getChecklistKey(date, templateId);
-    const data = await kv.get(key);
+    const data = await redis.get(key);
     return data || { responses: {}, completion: null, progress: 0, total: 0 };
   } catch (error) {
-    console.error('KV get error:', error);
+    console.error('Redis get error:', error);
     return { responses: {}, completion: null, progress: 0, total: 0 };
   }
 }
@@ -81,10 +86,11 @@ async function saveResponse(date, templateId, itemId, value, totalItems) {
     session.total = totalItems;
     session.progress = Object.values(session.responses).filter(v => v !== null && v !== undefined && v !== '').length;
 
-    await kv.set(key, session);
+    // Store with 7-day TTL so old checklists auto-expire
+    await redis.set(key, session, { ex: 7 * 24 * 60 * 60 });
     return { success: true, progress: session.progress, total: session.total };
   } catch (error) {
-    console.error('KV save error:', error);
+    console.error('Redis save error:', error);
     throw error;
   }
 }
@@ -107,17 +113,18 @@ async function markComplete(date, templateId, completedBy, totalItems) {
     session.progress = totalItems;
     session.total = totalItems;
 
-    await kv.set(key, session);
+    // Store with 7-day TTL
+    await redis.set(key, session, { ex: 7 * 24 * 60 * 60 });
 
-    // Add to completions index
+    // Add to completions index (also with 7-day TTL)
     const indexKey = getCompletionsIndexKey(date);
-    const index = await kv.get(indexKey) || {};
+    const index = await redis.get(indexKey) || {};
     index[templateId] = completion;
-    await kv.set(indexKey, index);
+    await redis.set(indexKey, index, { ex: 7 * 24 * 60 * 60 });
 
     return { success: true, completion };
   } catch (error) {
-    console.error('KV complete error:', error);
+    console.error('Redis complete error:', error);
     throw error;
   }
 }
@@ -142,7 +149,7 @@ async function getChecklistStatus(date, templateId, totalItems) {
 
     return { status: 'not-started', progress: 0, total: totalItems };
   } catch (error) {
-    console.error('KV status error:', error);
+    console.error('Redis status error:', error);
     return { status: 'not-started', progress: 0, total: totalItems };
   }
 }
@@ -156,14 +163,14 @@ async function getCompletionsInRange(fromDate, toDate) {
     const current = new Date(from);
     while (current <= to) {
       const dateStr = current.toISOString().split('T')[0];
-      const index = await kv.get(getCompletionsIndexKey(dateStr)) || {};
+      const index = await redis.get(getCompletionsIndexKey(dateStr)) || {};
       completions.push(...Object.values(index));
       current.setDate(current.getDate() + 1);
     }
 
     return completions.sort((a, b) => new Date(b.completedAt) - new Date(a.completedAt));
   } catch (error) {
-    console.error('KV range error:', error);
+    console.error('Redis range error:', error);
     return [];
   }
 }
