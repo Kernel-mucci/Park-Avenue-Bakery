@@ -401,11 +401,12 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (!isAuthenticated(req)) return res.status(401).json({ error: 'Not authenticated' });
 
-  // Parse path from query parameter
-  const pathSegments = req.query.path || [];
-  const pathString = Array.isArray(pathSegments) ? pathSegments.join('/') : pathSegments;
+  // Parse path segments from Vercel catch-all query parameter
+  const { query } = req;
+  const pathSegments = Array.isArray(query.path) ? query.path : query.path ? [query.path] : [];
+  const pathString = pathSegments.join('/');
 
-  console.log('Checklist API path:', pathString, 'method:', req.method);
+  console.log('Checklist API path:', pathString, 'segments:', pathSegments, 'method:', req.method);
 
   try {
     // GET /history - Get completion history
