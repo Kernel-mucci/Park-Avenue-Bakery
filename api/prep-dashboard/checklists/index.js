@@ -2,7 +2,12 @@
 // Handles GET /api/prep-dashboard/checklists - List all checklists
 
 import crypto from 'crypto';
-import { kv } from '@vercel/kv';
+import { Redis } from '@upstash/redis';
+
+const redis = new Redis({
+  url: process.env.UPSTASH_REDIS_REST_URL,
+  token: process.env.UPSTASH_REDIS_REST_TOKEN,
+});
 
 // Auth helpers
 function generateSessionToken(password) {
@@ -49,14 +54,14 @@ function formatTime12Hour(time24) {
   return `${hour % 12 || 12}:${minutes} ${hour >= 12 ? 'PM' : 'AM'}`;
 }
 
-// KV helpers
+// Redis helpers (Upstash Redis)
 async function getChecklistSession(date, templateId) {
   try {
     const key = `checklist:${date}:${templateId}`;
-    const data = await kv.get(key);
+    const data = await redis.get(key);
     return data || { responses: {}, completion: null, progress: 0, total: 0 };
   } catch (error) {
-    console.error('KV get error:', error);
+    console.error('Redis get error:', error);
     return { responses: {}, completion: null, progress: 0, total: 0 };
   }
 }
@@ -81,7 +86,7 @@ async function getChecklistStatus(date, templateId, totalItems) {
 
     return { status: 'not-started', progress: 0, total: totalItems };
   } catch (error) {
-    console.error('KV status error:', error);
+    console.error('Redis status error:', error);
     return { status: 'not-started', progress: 0, total: totalItems };
   }
 }
