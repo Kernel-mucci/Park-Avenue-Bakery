@@ -158,6 +158,26 @@ export default async function handler(req, res) {
             });
         }
 
+        // Add hidden $0 line item with customer info (Clover doesn't reliably associate customers)
+        if (firstName || lastName) {
+            const custName = `${firstName} ${lastName}`.trim();
+            const custPhone = orderData.customer.phone || '';
+            lineItems.push({
+                name: `[CUSTOMER: ${custName} | ${custPhone}]`,
+                price: 0,
+                unitQty: 1
+            });
+        }
+
+        // Add hidden $0 line item with customer notes (Clover drops shoppingCart.note)
+        if (customerNotes) {
+            lineItems.push({
+                name: `[NOTES: ${customerNotes.substring(0, 100)}]`,
+                price: 0,
+                unitQty: 1
+            });
+        }
+
         // Build checkout request payload
         const checkoutPayload = {
             customer: {

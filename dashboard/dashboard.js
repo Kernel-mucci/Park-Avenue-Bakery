@@ -317,6 +317,11 @@ class PrepDashboard {
                         </div>
                     `).join('')}
                 </div>
+                ${order.notes ? `
+                <div class="order-card-notes">
+                    <span class="notes-label">Notes:</span> ${this.escapeHtml(order.notes)}
+                </div>
+                ` : ''}
                 <div class="order-card-footer">
                     <span class="order-placed">Placed: ${this.escapeHtml(order.placedAtDisplay || 'Unknown')}</span>
                     ${order.total && order.total !== '0.00' ? `<span class="order-total">$${order.total}</span>` : ''}
@@ -559,6 +564,7 @@ class PrepDashboard {
                                     </li>
                                 `).join('')}
                             </ul>
+                            ${order.notes ? `<div class="print-order-notes"><strong>Notes:</strong> ${this.escapeHtml(order.notes)}</div>` : ''}
                         </div>
                     `).join('')}
                 </div>
