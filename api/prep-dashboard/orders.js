@@ -168,16 +168,35 @@ function processOrders(orders, targetDate) {
         let pickupTime = null;
         let pickupDate = null;
 
-        // FIRST: Check line items for hidden pickup info (most reliable)
-        // Format: "[PICKUP: YYYY-MM-DD @ HH:MM]"
+        // FIRST: Check line items for hidden metadata (most reliable)
+        // These are $0 line items added by create-checkout.js
+        let extractedCustomerName = null;
+        let extractedCustomerPhone = null;
+        let extractedNotes = null;
+
         if (order.lineItems && order.lineItems.elements) {
             for (const item of order.lineItems.elements) {
-                const pickupItemMatch = (item.name || '').match(/\[PICKUP:\s*(\d{4}-\d{2}-\d{2})\s*@\s*(\d{1,2}:\d{2})\]/i);
+                const itemName = item.name || '';
+
+                // Format: "[PICKUP: YYYY-MM-DD @ HH:MM]"
+                const pickupItemMatch = itemName.match(/\[PICKUP:\s*(\d{4}-\d{2}-\d{2})\s*@\s*(\d{1,2}:\d{2})\]/i);
                 if (pickupItemMatch) {
                     pickupDate = pickupItemMatch[1];
                     const timeParts = pickupItemMatch[2].split(':');
                     pickupTime = timeParts[0].padStart(2, '0') + ':' + timeParts[1];
-                    break;
+                }
+
+                // Format: "[CUSTOMER: Name | Phone]"
+                const customerMatch = itemName.match(/\[CUSTOMER:\s*(.+?)\s*\|\s*(.*?)\]/i);
+                if (customerMatch) {
+                    extractedCustomerName = customerMatch[1].trim();
+                    extractedCustomerPhone = customerMatch[2].trim();
+                }
+
+                // Format: "[NOTES: Customer notes here]"
+                const notesMatch = itemName.match(/\[NOTES:\s*(.+?)\]/i);
+                if (notesMatch) {
+                    extractedNotes = notesMatch[1].trim();
                 }
             }
         }
@@ -218,22 +237,26 @@ function processOrders(orders, targetDate) {
         // Count this order (it passed the filter)
         filteredOrderCount++;
 
-        // Extract customer info from Clover order
-        const customerName = order.customers?.elements?.[0]?.firstName
+        // Extract customer info - prefer hidden line item data over Clover API data
+        const cloverCustomerName = order.customers?.elements?.[0]?.firstName
             ? `${order.customers.elements[0].firstName} ${order.customers.elements[0].lastName || ''}`.trim()
-            : (order.title || 'Guest');
-        const customerPhone = order.customers?.elements?.[0]?.phoneNumbers?.elements?.[0]?.phoneNumber
+            : (order.title || null);
+        const cloverCustomerPhone = order.customers?.elements?.[0]?.phoneNumbers?.elements?.[0]?.phoneNumber
             || order.phone
             || '';
 
-        // Get order items (excluding hidden pickup metadata)
+        // Use extracted values first (from hidden line items), then fall back to Clover data
+        const customerName = extractedCustomerName || cloverCustomerName || 'Guest';
+        const customerPhone = extractedCustomerPhone || cloverCustomerPhone || '';
+
+        // Get order items (excluding hidden metadata items)
         const orderItems = [];
         if (order.lineItems && order.lineItems.elements) {
             order.lineItems.elements.forEach(item => {
                 const name = item.name || 'Unknown Item';
 
-                // Skip hidden pickup info items
-                if (name.startsWith('[PICKUP:')) {
+                // Skip hidden metadata items (pickup, customer, notes)
+                if (name.startsWith('[PICKUP:') || name.startsWith('[CUSTOMER:') || name.startsWith('[NOTES:')) {
                     return;
                 }
 
@@ -265,7 +288,8 @@ function processOrders(orders, targetDate) {
             placedAtDisplay: formatPlacedTime(order.createdTime, targetDate),
             items: orderItems,
             itemCount: orderItems.reduce((sum, item) => sum + item.quantity, 0),
-            total: orderTotal
+            total: orderTotal,
+            notes: extractedNotes || null
         };
 
         // Check if this is a same-day order (placed today for today)
