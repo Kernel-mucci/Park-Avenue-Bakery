@@ -43,6 +43,7 @@
         </div>
     </div>
 
+    <script src="/api-config.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const form = document.getElementById('loginForm');
@@ -55,7 +56,7 @@
 
             async function checkAuth() {
                 try {
-                    const response = await fetch('/api/prep-dashboard/auth');
+                    const response = await fetch(API_BASE + '/api/prep-dashboard/auth', { credentials: 'include' });
                     const data = await response.json();
                     if (data.authenticated) {
                         window.location.href = '/dashboard/';
@@ -80,11 +81,12 @@
                 hideError();
 
                 try {
-                    const response = await fetch('/api/prep-dashboard/auth', {
+                    const response = await fetch(API_BASE + '/api/prep-dashboard/auth', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'
                         },
+                        credentials: 'include',
                         body: JSON.stringify({ password })
                     });
 
