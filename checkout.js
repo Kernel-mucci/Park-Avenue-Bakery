@@ -94,7 +94,7 @@ class CheckoutManager {
         pickupTimeSelect.disabled = true;
 
         try {
-            const response = await fetch(`/api/order-rules?pickupDate=${pickupDate}&type=slots`);
+            const response = await fetch(`${API_BASE}/api/order-rules?pickupDate=${pickupDate}&type=slots`);
 
             if (!response.ok) {
                 throw new Error('Failed to load time slots');
@@ -299,7 +299,7 @@ class CheckoutManager {
                 }))
             };
 
-            const response = await fetch('/api/order-rules', {
+            const response = await fetch(API_BASE + '/api/order-rules', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -364,8 +364,8 @@ class CheckoutManager {
                 orderNumber: this.generateOrderNumber()
             };
 
-            // Call the Vercel serverless function
-            const response = await fetch('/api/create-checkout', {
+            // Call the API serverless function
+            const response = await fetch(API_BASE + '/api/create-checkout', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'

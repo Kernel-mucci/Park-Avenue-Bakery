@@ -23,7 +23,7 @@ class ChecklistHistory {
 
     async checkAuth() {
         try {
-            const response = await fetch('/api/prep-dashboard/auth');
+            const response = await fetch(API_BASE + '/api/prep-dashboard/auth', { credentials: 'include' });
             const data = await response.json();
             return data.authenticated === true;
         } catch (e) {
@@ -75,7 +75,7 @@ class ChecklistHistory {
         }
 
         try {
-            const response = await fetch(url);
+            const response = await fetch(API_BASE + url, { credentials: 'include' });
 
             if (response.status === 401) {
                 window.location.href = '/dashboard/login.html';
@@ -178,7 +178,7 @@ class ChecklistHistory {
 
     async logout() {
         try {
-            await fetch('/api/prep-dashboard/auth', { method: 'DELETE' });
+            await fetch(API_BASE + '/api/prep-dashboard/auth', { method: 'DELETE', credentials: 'include' });
         } catch (e) {
             // Ignore errors
         }

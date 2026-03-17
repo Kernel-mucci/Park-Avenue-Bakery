@@ -43,7 +43,7 @@ class PrepDashboard {
 
     async checkAuth() {
         try {
-            const response = await fetch('/api/prep-dashboard/auth');
+            const response = await fetch(API_BASE + '/api/prep-dashboard/auth', { credentials: 'include' });
             const data = await response.json();
             return data.authenticated === true;
         } catch (e) {
@@ -154,7 +154,7 @@ class PrepDashboard {
         }
 
         try {
-            const response = await fetch(`/api/prep-dashboard/orders?date=${this.currentDate}`);
+            const response = await fetch(`${API_BASE}/api/prep-dashboard/orders?date=${this.currentDate}`, { credentials: 'include' });
 
             if (response.status === 401) {
                 window.location.href = '/dashboard/login.html';
@@ -662,8 +662,9 @@ class PrepDashboard {
 
     async logout() {
         try {
-            await fetch('/api/prep-dashboard/auth', {
-                method: 'DELETE'
+            await fetch(API_BASE + '/api/prep-dashboard/auth', {
+                method: 'DELETE',
+                credentials: 'include'
             });
         } catch (e) {
             // Ignore errors

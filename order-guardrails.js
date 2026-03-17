@@ -135,7 +135,7 @@ class OrderGuardrails {
         loadMenuBtn.disabled = true;
 
         try {
-            const response = await fetch(`/api/order-rules?pickupDate=${pickupDate}`);
+            const response = await fetch(`${API_BASE}/api/order-rules?pickupDate=${pickupDate}`);
 
             if (!response.ok) {
                 const data = await response.json();

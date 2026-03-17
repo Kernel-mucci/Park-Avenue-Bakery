@@ -25,7 +25,7 @@ class ChecklistsHub {
 
     async checkAuth() {
         try {
-            const response = await fetch('/api/prep-dashboard/auth');
+            const response = await fetch(API_BASE + '/api/prep-dashboard/auth', { credentials: 'include' });
             const data = await response.json();
             return data.authenticated === true;
         } catch (e) {
@@ -65,7 +65,7 @@ class ChecklistsHub {
 
     async loadChecklists() {
         try {
-            const response = await fetch('/api/prep-dashboard/checklists');
+            const response = await fetch(API_BASE + '/api/prep-dashboard/checklists', { credentials: 'include' });
 
             if (response.status === 401) {
                 window.location.href = '/dashboard/login.html';
@@ -182,7 +182,7 @@ class ChecklistsHub {
 
     async logout() {
         try {
-            await fetch('/api/prep-dashboard/auth', { method: 'DELETE' });
+            await fetch(API_BASE + '/api/prep-dashboard/auth', { method: 'DELETE', credentials: 'include' });
         } catch (e) {
             // Ignore errors
         }

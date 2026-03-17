@@ -41,7 +41,7 @@ class ChecklistFlow {
 
     async checkAuth() {
         try {
-            const response = await fetch('/api/prep-dashboard/auth');
+            const response = await fetch(API_BASE + '/api/prep-dashboard/auth', { credentials: 'include' });
             const data = await response.json();
             return data.authenticated === true;
         } catch (e) {
@@ -77,7 +77,7 @@ class ChecklistFlow {
 
     async loadChecklist() {
         try {
-            const response = await fetch(`/api/prep-dashboard/checklists/${this.templateId}`);
+            const response = await fetch(`${API_BASE}/api/prep-dashboard/checklists/${this.templateId}`, { credentials: 'include' });
 
             if (response.status === 401) {
                 window.location.href = '/dashboard/login.html';
@@ -427,9 +427,10 @@ class ChecklistFlow {
 
         // Save to server
         try {
-            const response = await fetch(`/api/prep-dashboard/checklists/${this.templateId}/response`, {
+            const response = await fetch(`${API_BASE}/api/prep-dashboard/checklists/${this.templateId}/response`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
                 body: JSON.stringify({
                     itemId,
                     value,
@@ -623,9 +624,10 @@ class ChecklistFlow {
         localStorage.setItem('checklistStaffName', this.staffName);
 
         try {
-            const response = await fetch(`/api/prep-dashboard/checklists/${this.templateId}/complete`, {
+            const response = await fetch(`${API_BASE}/api/prep-dashboard/checklists/${this.templateId}/complete`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
                 body: JSON.stringify({
                     completedBy: this.staffName
                 })
